@@ -27,6 +27,18 @@ A modern, beautiful desktop app for renaming files and folders in bulk — with 
 
 ---
 
+## 📸 Preview
+
+<div align="center">
+
+<img src="./docs/screenshot.png" alt="Nomina app screenshot" width="820" />
+
+<sub>Nomina in action — dark theme</sub>
+
+</div>
+
+---
+
 ## ✨ Overview
 
 **Nomina** turns the tedious task of renaming dozens — or thousands — of files into a smooth, visual workflow. Drop a folder, stack up rules (prefix, suffix, replace, slice, transform, numbering), and watch the new names update live before a single file is touched on disk.
