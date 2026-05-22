@@ -68,6 +68,16 @@ jobs:
             gir1.2-webkit2-4.1 \
             libcairo2-dev pkg-config python3-gi gir1.2-gtk-3.0
 
+      - name: Install Cairo (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          # MSYS2 ships preinstalled on GitHub's windows-latest runners.
+          # Install Cairo + its dependencies and expose the DLLs on PATH so
+          # cairocffi (used by cairosvg) can dlopen libcairo-2.dll.
+          C:\msys64\usr\bin\pacman.exe -S --noconfirm --needed mingw-w64-x86_64-cairo
+          Add-Content $env:GITHUB_PATH "C:\msys64\mingw64\bin"
+
       - name: Install Python deps
         run: |
           python -m pip install --upgrade pip
