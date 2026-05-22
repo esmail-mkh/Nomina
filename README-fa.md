@@ -32,7 +32,7 @@
 
 <div align="center">
 
-<img src="./docs/screenshot.png" alt="نمایی از اپلیکیشن نومینا" width="820" />
+<img src="https://github.com/esmail-mkh/Nomina/blob/main/docs/screenshot.JPG" alt="نمایی از اپلیکیشن نومینا" width="820" />
 
 <sub>نومینا در حال اجرا — تم تیره</sub>
 
