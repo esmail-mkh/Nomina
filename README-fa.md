@@ -15,13 +15,14 @@
 </p>
 
 <p>
-  <img src="https://img.shields.io/badge/platform-Windows-0078D6?style=flat-square&logo=windows" />
+  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-0078D6?style=flat-square" />
   <img src="https://img.shields.io/badge/license-MIT-3ecf8e?style=flat-square" />
   <img src="https://img.shields.io/badge/status-active-7c6dfa?style=flat-square" />
   <img src="https://img.shields.io/badge/i18n-EN%20%2F%20FA-9d91fb?style=flat-square" />
+  <a href="https://github.com/esmail-mkh/nomina/releases/latest"><img src="https://img.shields.io/github/v/release/esmail-mkh/nomina?color=7c6dfa&style=flat-square&label=release" /></a>
 </p>
 
-[English 🇬🇧](./README.md) · [امکانات](#-امکانات) · [نصب](#-نصب) · [استفاده](#-استفاده) · [میان‌برها](#-میانبرهای-صفحه‌کلید)
+[English 🇬🇧](./README.md) · [دانلود](#-دانلود) · [امکانات](#-امکانات) · [نصب](#-نصب) · [بیلد از سورس](#-بیلد-از-سورس) · [استفاده](#-استفاده) · [میان‌برها](#-میانبرهای-صفحه‌کلید)
 
 </div>
 
@@ -36,6 +37,20 @@
 <sub>نومینا در حال اجرا — تم تیره</sub>
 
 </div>
+
+---
+
+## ⬇️ دانلود
+
+از [**آخرین ریلیز**](https://github.com/esmail-mkh/nomina/releases/latest) یک نسخه‌ی آماده‌ی نصب دانلود کنید — بدون نیاز به نصب پایتون.
+
+| پلتفرم | فایل | توضیح |
+|---|---|---|
+| 🪟 **ویندوز (x64)** | `Nomina-vX.Y.Z-windows-x64.zip`  | از حالت فشرده خارج کن و `Nomina.exe` را اجرا کن |
+| 🐧 **لینوکس (x64)** | `Nomina-vX.Y.Z-linux-x64.tar.gz` | با `tar -xzf` باز کن و `./Nomina/Nomina` را اجرا کن |
+| 🍎 **مک‌اواس**      | `Nomina-vX.Y.Z-macos.zip`        | از حالت فشرده خارج کن و `Nomina.app` را به Applications بکش. اولین اجرا: راست‌کلیک → *Open* |
+
+هر ریلیز همراه با فایل `SHA256SUMS.txt` منتشر می‌شود تا بتوانید صحت دانلود را بررسی کنید.
 
 ---
 
@@ -87,7 +102,7 @@
 ### پیش‌نیازها
 
 - **Python 3.10 یا بالاتر**
-- **ویندوز 10/11** (از Edge WebView2 از طریق pywebview استفاده می‌کند)
+- **ویندوز 10/11** (Edge WebView2)، **لینوکس** (GTK 3 + WebKit2GTK 4.1)، یا **macOS 11+**
 
 ### Setup
 
@@ -98,17 +113,51 @@ cd nomina
 
 # 2. (Recommended) Create a virtual environment
 python -m venv .venv
+# Windows:
 .venv\Scripts\activate
+# Linux / macOS:
+source .venv/bin/activate
 
 # 3. Install dependencies
-pip install pywebview pyperclip
+pip install -r requirements.txt
 
 # 4. Run the app
 python main.py
 ```
 
 > 💡 **نکته:** در اولین اجرا، نومینا پوشه‌ی تنظیماتش را اینجا می‌سازد:  
-> `Documents\EMKH_Apps\Nomina\` (مخصوص پریست‌ها و تنظیمات شما)
+> `Documents/EMKH_Apps/Nomina/` (در لینوکس/مک از `~/Documents/...` استفاده کنید) — برای ذخیره‌ی پریست‌ها و تنظیمات.
+
+---
+
+## 🏗️ بیلد از سورس
+
+با PyInstaller می‌توانید یک اپلیکیشن مستقل و قابل توزیع برای پلتفرم خودتان بسازید.
+
+```bash
+# Install build tooling
+pip install pyinstaller cairosvg pillow
+
+# Generate platform-specific icons from build/icon.svg
+python build/make_icons.py
+
+# Build (onedir) — output goes to dist/Nomina/  (or dist/Nomina.app on macOS)
+pyinstaller build/nomina.spec --noconfirm --clean
+```
+
+برای کاهش حجم خروجی، **UPX** نصب کنید و `--upx-dir /path/to/upx` را اضافه کنید (فقط روی ویندوز و لینوکس — مک به‌صورت خودکار رد می‌شود). فایل spec از قبل لیست استثناهای ایمن را دارد.
+
+### 🤖 ریلیز خودکار (GitHub Actions)
+
+این پروژه یک workflow دستی در [`.github/workflows/release.yml`](.github/workflows/release.yml) دارد که:
+
+۱. ✅ هنگام اجرا، **شماره‌ی نسخه** را از شما می‌پرسد  
+۲. 🛠️ به‌صورت موازی روی **Windows**، **Linux** و **macOS** بیلد می‌کند  
+۳. 🎨 آیکون‌های مخصوص هر پلتفرم را از `build/icon.svg` می‌سازد  
+۴. 📦 با **آخرین نسخه‌ی UPX** (به‌طور خودکار از مخزن رسمی دانلود می‌شود) فشرده می‌کند  
+۵. 🚀 یک **GitHub Release** با هر سه آرشیو + `SHA256SUMS.txt` منتشر می‌کند  
+
+برای انتشار یک ریلیز: **Actions → Build & Release → Run workflow → وارد کردن شماره نسخه → اجرا.**
 
 ---
 
@@ -154,11 +203,21 @@ python main.py
 
 ```
 nomina/
-├── main.py          # نقطه ورود پایتون + پل API برای pywebview
-├── index.html       # ساختار اصلی UI
-├── style.css        # تمام استایل‌ها (تم تیره و روشن، پشتیبانی RTL)
-├── script.js        # منطق رابط، i18n، موتور قانون، پیش‌نمایش
-└── fonts/           # فونت‌های همراه (Outfit, IBM Plex Mono, Vazirmatn)
+├── main.py                       # نقطه ورود پایتون + پل API برای pywebview
+├── index.html                    # ساختار اصلی UI
+├── style.css                     # تمام استایل‌ها (تم تیره و روشن، پشتیبانی RTL)
+├── script.js                     # منطق رابط، i18n، موتور قانون، پیش‌نمایش
+├── requirements.txt              # وابستگی‌های پایتون
+├── fonts/                        # فونت‌های همراه (Outfit, IBM Plex Mono, Vazirmatn)
+├── build/
+│   ├── icon.svg                  # سورس آیکون اپ (هم‌سان با لوگوی titlebar)
+│   ├── make_icons.py             # تبدیل SVG به .ico / .png / .icns
+│   └── nomina.spec               # فایل PyInstaller (onedir، چندپلتفرمی، آماده‌ی UPX)
+├── docs/
+│   └── screenshot.png            # تصویر استفاده‌شده در README
+└── .github/
+    └── workflows/
+        └── release.yml           # workflow انتشار دستی (Win/Linux/macOS)
 ```
 
 ---
