@@ -27,7 +27,28 @@ ICO_SIZES = (16, 24, 32, 48, 64, 128, 256)
 ICNS_SIZES = (16, 32, 64, 128, 256, 512, 1024)
 
 
+def _register_cairo_dll_dirs() -> None:
+    # Python 3.8+ on Windows: ctypes.CDLL no longer searches PATH for DLLs,
+    # so cairocffi can't find libcairo-2.dll even if its directory is on PATH.
+    # Register likely install locations explicitly via os.add_dll_directory().
+    if sys.platform != "win32":
+        return
+    candidates = [
+        os.environ.get("CAIRO_DLL_DIR"),
+        r"C:\msys64\mingw64\bin",
+        r"C:\msys64\ucrt64\bin",
+        r"C:\Program Files\GTK3-Runtime Win64\bin",
+    ]
+    for path in candidates:
+        if path and os.path.isdir(path):
+            try:
+                os.add_dll_directory(path)
+            except (OSError, AttributeError):
+                pass
+
+
 def _rasterize(size: int) -> bytes:
+    _register_cairo_dll_dirs()
     import cairosvg
     return cairosvg.svg2png(url=str(SVG), output_width=size, output_height=size)
 
