@@ -32,7 +32,7 @@ A modern, beautiful desktop app for renaming files and folders in bulk — with 
 
 <div align="center">
 
-<img src="./docs/screenshot.jpg" alt="Nomina app screenshot" width="820" />
+<img src="./docs/screenshot.JPG" alt="Nomina app screenshot" width="820" />
 
 <sub>Nomina in action — dark theme</sub>
 
