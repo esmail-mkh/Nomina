@@ -113,15 +113,15 @@ jobs:
         run: python -m pip install "PyGObject<3.52"
 
       - name: Generate platform icons
-        shell: bash
-        run: |
-          # Windows: add MSYS2's mingw64 bin to PATH only for this step so
-          # cairocffi can locate libcairo-2.dll without polluting earlier
-          # pip-install steps with MSYS2's Python.
-          if [ "$RUNNER_OS" = "Windows" ]; then
-            export PATH="/c/msys64/mingw64/bin:$PATH"
-          fi
-          python build/make_icons.py
+        # Use the default shell per OS (pwsh on Windows, bash elsewhere) so
+        # `python` resolves to setup-python's interpreter. Git Bash on Windows
+        # doesn't inherit setup-python's PATH reliably, which breaks imports.
+        # CAIRO_DLL_DIR is read by make_icons.py to register the Cairo DLL
+        # directory via os.add_dll_directory() (Python 3.8+ ignores PATH for
+        # ctypes DLL loads on Windows).
+        env:
+          CAIRO_DLL_DIR: ${{ matrix.os == 'windows-latest' && 'C:\msys64\mingw64\bin' || '' }}
+        run: python build/make_icons.py
 
       # ─────────────────────────────────────────────────────────
       # UPX: fetch the latest release directly from upx/upx so we
