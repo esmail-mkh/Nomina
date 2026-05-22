@@ -15,13 +15,14 @@ A modern, beautiful desktop app for renaming files and folders in bulk — with 
 </p>
 
 <p>
-  <img src="https://img.shields.io/badge/platform-Windows-0078D6?style=flat-square&logo=windows" />
+  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-0078D6?style=flat-square" />
   <img src="https://img.shields.io/badge/license-MIT-3ecf8e?style=flat-square" />
   <img src="https://img.shields.io/badge/status-active-7c6dfa?style=flat-square" />
   <img src="https://img.shields.io/badge/i18n-EN%20%2F%20FA-9d91fb?style=flat-square" />
+  <a href="https://github.com/esmail-mkh/nomina/releases/latest"><img src="https://img.shields.io/github/v/release/esmail-mkh/nomina?color=7c6dfa&style=flat-square&label=release" /></a>
 </p>
 
-[فارسی 🇮🇷](./README-fa.md) · [Features](#-features) · [Install](#-installation) · [Usage](#-usage) · [Shortcuts](#-keyboard-shortcuts)
+[فارسی 🇮🇷](./README-fa.md) · [Download](#-download) · [Features](#-features) · [Install](#-installation) · [Build](#-build-from-source) · [Usage](#-usage) · [Shortcuts](#-keyboard-shortcuts)
 
 </div>
 
@@ -36,6 +37,20 @@ A modern, beautiful desktop app for renaming files and folders in bulk — with 
 <sub>Nomina in action — dark theme</sub>
 
 </div>
+
+---
+
+## ⬇️ Download
+
+Grab a pre-built binary from the [**latest release**](https://github.com/esmail-mkh/nomina/releases/latest) — no Python install required.
+
+| Platform | File | Notes |
+|---|---|---|
+| 🪟 **Windows x64**  | `Nomina-vX.Y.Z-windows-x64.zip`  | Unzip and run `Nomina.exe` |
+| 🐧 **Linux x64**    | `Nomina-vX.Y.Z-linux-x64.tar.gz` | `tar -xzf` then `./Nomina/Nomina` |
+| 🍎 **macOS**        | `Nomina-vX.Y.Z-macos.zip`        | Unzip → drag `Nomina.app` to Applications. First launch: right-click → *Open* |
+
+Every release ships with a `SHA256SUMS.txt` so you can verify your download.
 
 ---
 
@@ -87,7 +102,7 @@ Each rule can be **toggled independently** and applied to **all items** or just 
 ### Requirements
 
 - **Python 3.10+**
-- **Windows 10/11** (uses Edge WebView2 via pywebview)
+- **Windows 10/11** (Edge WebView2), **Linux** (GTK 3 + WebKit2GTK 4.1), or **macOS 11+**
 
 ### Setup
 
@@ -98,17 +113,51 @@ cd nomina
 
 # 2. (Recommended) Create a virtual environment
 python -m venv .venv
+# Windows:
 .venv\Scripts\activate
+# Linux / macOS:
+source .venv/bin/activate
 
 # 3. Install dependencies
-pip install pywebview pyperclip
+pip install -r requirements.txt
 
 # 4. Run the app
 python main.py
 ```
 
 > 💡 **Tip:** On first run, Nomina creates its config folder at  
-> `Documents\EMKH_Apps\Nomina\` for your presets and settings.
+> `Documents/EMKH_Apps/Nomina/` (or `~/Documents/EMKH_Apps/Nomina/` on Linux/macOS) for your presets and settings.
+
+---
+
+## 🏗️ Build from Source
+
+You can produce a standalone, redistributable app for your platform with PyInstaller.
+
+```bash
+# Install build tooling
+pip install pyinstaller cairosvg pillow
+
+# Generate platform-specific icons from build/icon.svg
+python build/make_icons.py
+
+# Build (onedir) — output lands in dist/Nomina/  (or dist/Nomina.app on macOS)
+pyinstaller build/nomina.spec --noconfirm --clean
+```
+
+For smaller binaries, install **UPX** and add `--upx-dir /path/to/upx` (Windows + Linux only — macOS skips UPX automatically). The included spec already declares safe exclusion rules.
+
+### 🤖 Automated releases (GitHub Actions)
+
+This repo ships with a manual-dispatch workflow at [`.github/workflows/release.yml`](.github/workflows/release.yml) that:
+
+1. ✅ Asks for a **release version** when triggered
+2. 🛠️ Builds in parallel on **Windows**, **Linux**, and **macOS** runners
+3. 🎨 Generates platform icons from `build/icon.svg`
+4. 📦 Compresses with the **latest UPX** (auto-fetched from upstream)
+5. 🚀 Publishes a **GitHub Release** with all three archives + `SHA256SUMS.txt`
+
+To cut a release: **Actions → Build & Release → Run workflow → enter version → run.**
 
 ---
 
@@ -154,11 +203,21 @@ python main.py
 
 ```
 nomina/
-├── main.py          # Python entry point + pywebview API bridge
-├── index.html       # Main UI markup
-├── style.css        # All styling (dark + light themes, RTL support)
-├── script.js        # UI logic, i18n, rule engine, preview
-└── fonts/           # Bundled fonts (Outfit, IBM Plex Mono, Vazirmatn)
+├── main.py                       # Python entry point + pywebview API bridge
+├── index.html                    # Main UI markup
+├── style.css                     # All styling (dark + light themes, RTL support)
+├── script.js                     # UI logic, i18n, rule engine, preview
+├── requirements.txt              # Python runtime dependencies
+├── fonts/                        # Bundled fonts (Outfit, IBM Plex Mono, Vazirmatn)
+├── build/
+│   ├── icon.svg                  # Source app icon (matches in-app titlebar)
+│   ├── make_icons.py             # Rasterizes SVG → .ico / .png / .icns
+│   └── nomina.spec               # PyInstaller spec (onedir, cross-platform, UPX-ready)
+├── docs/
+│   └── screenshot.png            # Used in README preview
+└── .github/
+    └── workflows/
+        └── release.yml           # Manual-dispatch release workflow (Win/Linux/macOS)
 ```
 
 ---
