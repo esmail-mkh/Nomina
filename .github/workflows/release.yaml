@@ -100,7 +100,10 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
           python -m pip install pyinstaller cairosvg pillow
-          python -c "import cairosvg, PIL; print('cairosvg', cairosvg.__version__, '/ Pillow', PIL.__version__)"
+          # Sanity check: confirm the packages landed in the active Python.
+          # Don't import cairosvg here — it tries to dlopen libcairo at import
+          # time, which only succeeds once make_icons.py registers the DLL dir.
+          python -c "import PIL, PyInstaller; import importlib.util as u; assert u.find_spec('cairosvg'), 'cairosvg missing'; print('ok')"
 
       - name: Install PyGObject (Linux only)
         if: matrix.os == 'ubuntu-latest'
