@@ -1,0 +1,221 @@
+name: Build & Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. 1.0.0). Will be tagged v<version>.'
+        required: true
+        type: string
+      prerelease:
+        description: 'Mark this release as a pre-release?'
+        required: false
+        type: boolean
+        default: false
+      draft:
+        description: 'Create as draft?'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  # ─────────────────────────────────────────────────────────────
+  # Build matrix: Windows, Linux, macOS — all onedir, all icon-embedded
+  # ─────────────────────────────────────────────────────────────
+  build:
+    name: Build (${{ matrix.label }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            label: windows
+            ext: zip
+            artifact_glob: 'dist/Nomina'
+            archive_name: Nomina-v${{ inputs.version }}-windows-x64
+          - os: ubuntu-latest
+            label: linux
+            ext: tar.gz
+            artifact_glob: 'dist/Nomina'
+            archive_name: Nomina-v${{ inputs.version }}-linux-x64
+          - os: macos-latest
+            label: macos
+            ext: zip
+            artifact_glob: 'dist/Nomina.app'
+            archive_name: Nomina-v${{ inputs.version }}-macos
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Linux system deps
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libgtk-3-0 libgtk-3-dev \
+            libwebkit2gtk-4.1-0 libwebkit2gtk-4.1-dev \
+            gir1.2-webkit2-4.1 \
+            libcairo2-dev pkg-config python3-gi gir1.2-gtk-3.0
+
+      - name: Install Python deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyinstaller cairosvg pillow
+          # Linux: pywebview needs PyGObject + QtWebEngine fallback
+          python -c "import sys; sys.exit(0)"
+
+      - name: Install PyGObject (Linux only)
+        if: matrix.os == 'ubuntu-latest'
+        run: pip install PyGObject
+
+      - name: Generate platform icons
+        run: python build/make_icons.py
+
+      # ─────────────────────────────────────────────────────────
+      # UPX: fetch the latest release directly from upx/upx so we
+      # always get current binaries (apt/brew versions lag). Skipped
+      # on macOS — UPX breaks Mach-O bundles & trips Gatekeeper.
+      # ─────────────────────────────────────────────────────────
+      - name: Install latest UPX (Windows)
+        if: matrix.os == 'windows-latest'
+        shell: pwsh
+        run: |
+          $latest = Invoke-RestMethod -Uri "https://api.github.com/repos/upx/upx/releases/latest" `
+                     -Headers @{ "User-Agent" = "gh-actions" }
+          $asset = $latest.assets | Where-Object { $_.name -match "win64\.zip$" } | Select-Object -First 1
+          if (-not $asset) { throw "Could not find UPX win64 asset" }
+          Write-Host "Downloading $($asset.name) ($($latest.tag_name))"
+          Invoke-WebRequest -Uri $asset.browser_download_url -OutFile upx.zip
+          Expand-Archive upx.zip -DestinationPath upx-tmp
+          $upxExe = Get-ChildItem upx-tmp -Recurse -Filter upx.exe | Select-Object -First 1
+          $upxDir = Split-Path $upxExe.FullName -Parent
+          Add-Content $env:GITHUB_PATH $upxDir
+          Add-Content $env:GITHUB_ENV "UPX_DIR=$upxDir"
+          & $upxExe.FullName --version
+
+      - name: Install latest UPX (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          latest=$(curl -s https://api.github.com/repos/upx/upx/releases/latest)
+          url=$(echo "$latest" | grep -oE '"browser_download_url": *"[^"]*amd64_linux\.tar\.xz"' | head -n1 | sed 's/.*"\(http[^"]*\)"/\1/')
+          tag=$(echo "$latest" | grep -oE '"tag_name": *"[^"]*"' | head -n1 | cut -d'"' -f4)
+          echo "Downloading UPX $tag from $url"
+          curl -L "$url" -o upx.tar.xz
+          mkdir -p upx-tmp && tar -xf upx.tar.xz -C upx-tmp --strip-components=1
+          upx_dir="$PWD/upx-tmp"
+          echo "$upx_dir" >> $GITHUB_PATH
+          echo "UPX_DIR=$upx_dir" >> $GITHUB_ENV
+          "$upx_dir/upx" --version
+
+      - name: Build with PyInstaller
+        shell: bash
+        run: |
+          if [ -n "${UPX_DIR:-}" ]; then
+            echo "Building with UPX compression (UPX_DIR=$UPX_DIR)"
+            pyinstaller build/nomina.spec --noconfirm --clean --upx-dir "$UPX_DIR"
+          else
+            echo "Building without UPX (macOS or no UPX available)"
+            pyinstaller build/nomina.spec --noconfirm --clean
+          fi
+
+      - name: Package (Windows / macOS — zip)
+        if: matrix.ext == 'zip'
+        shell: bash
+        run: |
+          cd dist
+          if [ -d "Nomina.app" ]; then
+            # macOS: zip the .app bundle preserving symlinks/perms
+            ditto -c -k --sequesterRsrc --keepParent "Nomina.app" "../${{ matrix.archive_name }}.zip"
+          else
+            # Windows: zip the Nomina folder
+            7z a -tzip "../${{ matrix.archive_name }}.zip" "Nomina" >/dev/null
+          fi
+
+      - name: Package (Linux — tar.gz)
+        if: matrix.ext == 'tar.gz'
+        run: |
+          cd dist
+          tar -czf "../${{ matrix.archive_name }}.tar.gz" Nomina
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.archive_name }}
+          path: ${{ matrix.archive_name }}.${{ matrix.ext }}
+          if-no-files-found: error
+          retention-days: 7
+
+  # ─────────────────────────────────────────────────────────────
+  # Release: gather all artifacts and publish a single GitHub release
+  # ─────────────────────────────────────────────────────────────
+  release:
+    name: Publish GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Flatten artifacts
+        run: |
+          mkdir -p release-files
+          find artifacts -type f \( -name "*.zip" -o -name "*.tar.gz" \) -exec cp {} release-files/ \;
+          ls -lh release-files
+
+      - name: Generate checksums
+        run: |
+          cd release-files
+          sha256sum * > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ inputs.version }}
+          name: Nomina v${{ inputs.version }}
+          draft: ${{ inputs.draft }}
+          prerelease: ${{ inputs.prerelease }}
+          generate_release_notes: true
+          body: |
+            ## ✦ Nomina v${{ inputs.version }}
+
+            Advanced batch file & folder renamer — built with Python + pywebview.
+
+            ### 📦 Downloads
+
+            | Platform | File |
+            |---|---|
+            | 🪟 **Windows x64**  | `Nomina-v${{ inputs.version }}-windows-x64.zip`  |
+            | 🐧 **Linux x64**    | `Nomina-v${{ inputs.version }}-linux-x64.tar.gz` |
+            | 🍎 **macOS**        | `Nomina-v${{ inputs.version }}-macos.zip`        |
+
+            SHA-256 checksums are in `SHA256SUMS.txt`.
+
+            ### 🚀 Run
+
+            - **Windows** — unzip and run `Nomina.exe`
+            - **Linux** — `tar -xzf` and run `./Nomina/Nomina`
+            - **macOS** — unzip and drag `Nomina.app` to Applications
+
+            > On macOS first launch, right-click → *Open* (unsigned build).
+          files: |
+            release-files/*.zip
+            release-files/*.tar.gz
+            release-files/SHA256SUMS.txt
