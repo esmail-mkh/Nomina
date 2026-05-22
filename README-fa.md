@@ -1,4 +1,4 @@
-<div align="center" dir="rtl">
+<div align="center">
 
 # ✦ نومینا ✦
 
@@ -27,7 +27,17 @@
 
 ---
 
-<div dir="rtl">
+## 📸 پیش‌نمایش
+
+<div align="center">
+
+<img src="./docs/screenshot.png" alt="نمایی از اپلیکیشن نومینا" width="820" />
+
+<sub>نومینا در حال اجرا — تم تیره</sub>
+
+</div>
+
+---
 
 ## ✨ معرفی
 
@@ -79,27 +89,23 @@
 - **Python 3.10 یا بالاتر**
 - **ویندوز 10/11** (از Edge WebView2 از طریق pywebview استفاده می‌کند)
 
-</div>
-
-### راه‌اندازی
+### Setup
 
 ```bash
-# ۱. کلون کردن پروژه
+# 1. Clone the repository
 git clone https://github.com/esmail-mkh/nomina.git
 cd nomina
 
-# ۲. (پیشنهادی) ساخت محیط مجازی
+# 2. (Recommended) Create a virtual environment
 python -m venv .venv
 .venv\Scripts\activate
 
-# ۳. نصب وابستگی‌ها
+# 3. Install dependencies
 pip install pywebview pyperclip
 
-# ۴. اجرای برنامه
+# 4. Run the app
 python main.py
 ```
-
-<div dir="rtl">
 
 > 💡 **نکته:** در اولین اجرا، نومینا پوشه‌ی تنظیماتش را اینجا می‌سازد:  
 > `Documents\EMKH_Apps\Nomina\` (مخصوص پریست‌ها و تنظیمات شما)
@@ -131,8 +137,6 @@ python main.py
 
 ## 🛠️ پشته‌ی فناوری
 
-</div>
-
 <div align="center">
 
 | لایه | فناوری |
@@ -144,13 +148,9 @@ python main.py
 
 </div>
 
-<div dir="rtl">
-
 ---
 
 ## 📁 ساختار پروژه
-
-</div>
 
 ```
 nomina/
@@ -161,13 +161,9 @@ nomina/
 └── fonts/           # فونت‌های همراه (Outfit, IBM Plex Mono, Vazirmatn)
 ```
 
-<div dir="rtl">
-
 ---
 
 ## 👤 توسعه‌دهنده
-
-</div>
 
 <div align="center">
 
@@ -179,8 +175,6 @@ _ابزارهایی می‌سازم که ساده و روان به نظر برس
 
 </div>
 
-<div dir="rtl">
-
 ---
 
 ## 📜 مجوز
@@ -188,8 +182,6 @@ _ابزارهایی می‌سازم که ساده و روان به نظر برس
 این پروژه تحت مجوز **MIT** منتشر شده — جزئیات کامل در فایل [LICENSE](LICENSE) آمده است.
 
 ---
-
-</div>
 
 <div align="center">
 
