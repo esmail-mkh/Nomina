@@ -1,0 +1,588 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <link rel="stylesheet" href="style.css"/>
+    <title>Nomina</title>
+</head>
+<body>
+
+<!-- Custom Title Bar -->
+<div class="titlebar" id="titlebar">
+    <div class="titlebar-left">
+        <div class="titlebar-logo">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+        </div>
+        <div class="titlebar-brand">
+            <span class="titlebar-title">Nomina</span>
+            <span class="titlebar-dot"></span>
+            <span class="titlebar-sub">Batch File Renamer</span>
+        </div>
+    </div>
+    <div class="titlebar-center" id="titlebarPath"></div>
+    <div class="titlebar-controls">
+        <button class="titlebar-btn minimize" onclick="minimizeWindow()" title="Minimize">
+            <svg width="12" height="2" viewBox="0 0 12 2"><rect width="12" height="1.5" rx="0.75" fill="currentColor"/></svg>
+        </button>
+        <button class="titlebar-btn maximize" onclick="maximizeWindow()" title="Maximize">
+            <svg width="11" height="11" viewBox="0 0 11 11"><rect x="0.75" y="0.75" width="9.5" height="9.5" rx="2.5" fill="none" stroke="currentColor" stroke-width="1.5"/></svg>
+        </button>
+        <button class="titlebar-btn close" onclick="closeWindow()" title="Close">
+            <svg width="12" height="12" viewBox="0 0 12 12"><path d="M1.5 1.5L10.5 10.5M10.5 1.5L1.5 10.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+    </div>
+</div>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal">
+        <div class="modal-title" id="modalTitle"></div>
+        <div class="modal-body" id="modalBody"></div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" id="modalCancelBtn" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" id="modalConfirmBtn">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<!-- Save Preset Modal -->
+<div class="modal-overlay" id="savePresetOverlay">
+    <div class="modal preset-modal">
+        <div class="modal-title">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--acc)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            Save Preset
+        </div>
+        <div class="modal-body">
+            <div class="preset-name-input-wrap">
+                <input type="text" id="presetNameInput" placeholder="Enter preset name..." maxlength="60"/>
+                <div class="preset-name-hint">This will save all your current rules and settings.</div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-ghost" onclick="closeSavePresetModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="savePreset()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- About Overlay -->
+<div class="about-overlay" id="aboutOverlay">
+    <div class="about-modal">
+        <div class="about-orbs">
+            <div class="about-orb about-orb-1"></div>
+            <div class="about-orb about-orb-2"></div>
+            <div class="about-orb about-orb-3"></div>
+            <div class="about-orb-glass"></div>
+        </div>
+        <div class="about-header">
+            <div class="about-header-left">
+                <div class="about-icon-wrapper">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                    </svg>
+                </div>
+                <div class="about-title-group">
+                    <div class="about-title">Nomina</div>
+                    <div class="about-version"><span class="version-dot"></span>v1.0 — Stable</div>
+                </div>
+            </div>
+            <button class="about-close-btn" onclick="closeAbout()" title="Close">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+            </button>
+        </div>
+        <div class="about-content" id="aboutModalBody"></div>
+    </div>
+</div>
+
+<!-- App Shell -->
+<div class="app-shell">
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <div class="toolbar-path">
+            <span class="path-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+                </svg>
+            </span>
+            <input type="text" class="path-input" id="pathInput" placeholder="Paste folder path or browse..."/>
+            <button class="path-clear-btn" id="pathClearBtn" onclick="clearPathInput()" style="display:none" title="Clear">
+                <svg width="10" height="10" viewBox="0 0 12 12"><path d="M1.5 1.5L10.5 10.5M10.5 1.5L1.5 10.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+        <div class="toolbar-actions">
+            <button class="btn btn-primary" id="loadBtn" onclick="pasteAndLoad()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                </svg>
+                <span>Paste &amp; Load</span>
+            </button>
+            <button class="btn btn-secondary" id="browseBtn" onclick="browseFolder()">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+                </svg>
+                <span>Browse</span>
+            </button>
+            <div class="toolbar-sep"></div>
+            
+            <!-- دکمه سوییچ Recursive (جدید) -->
+            <label class="recursive-toggle" title="Include Subfolders">
+                <input type="checkbox" id="recursiveChk" onchange="loadPath()">
+                <span class="rec-slider"></span>
+                <span class="rec-label">Recursive</span>
+            </label>
+            
+            <div class="toolbar-sep"></div>
+			
+            <button class="btn btn-secondary btn-rules-toggle" id="rulesToggleBtn" onclick="toggleSidebar()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <line x1="4" y1="6" x2="4" y2="20"/><line x1="4" y1="2" x2="4" y2="4"/>
+                    <line x1="12" y1="14" x2="12" y2="20"/><line x1="12" y1="2" x2="12" y2="12"/>
+                    <line x1="20" y1="10" x2="20" y2="20"/><line x1="20" y1="2" x2="20" y2="8"/>
+                    <circle cx="4" cy="5" r="2" fill="currentColor" stroke="none"/>
+                    <circle cx="12" cy="13" r="2" fill="currentColor" stroke="none"/>
+                    <circle cx="20" cy="9" r="2" fill="currentColor" stroke="none"/>
+                </svg>
+                <span>Rules</span>
+                <span class="rules-badge" id="rulesBadge" style="display:none">0</span>
+            </button>
+            <button class="btn btn-ghost btn-about" onclick="showAbout()" title="About">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/>
+                </svg>
+            </button>
+            <button class="btn btn-ghost btn-preset" id="presetBtn" onclick="togglePresetDropdown()" title="Presets">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </button>
+            <button class="btn btn-ghost btn-meta" id="metaToolbarBtn" onclick="toggleMetadata()" title="Remove Metadata">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+            </button>
+            <button class="btn btn-ghost btn-theme" id="themeToggleBtn" onclick="toggleTheme()" title="Switch Theme">
+                <svg class="theme-icon theme-icon-dark" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.8A8.5 8.5 0 1111.2 3 6.6 6.6 0 0021 12.8z"/></svg>
+                <svg class="theme-icon theme-icon-light" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+            </button>
+            <button class="btn btn-ghost btn-lang" id="languageToggleBtn" onclick="toggleLanguage()" title="Switch Language">EN</button>
+        </div>
+    </div>
+
+    <!-- Preset Dropdown -->
+    <div class="preset-dropdown" id="presetDropdown" style="display:none">
+        <div class="preset-dropdown-header">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--yellow)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            <span>Saved Configs</span>
+            <button class="preset-dropdown-close" onclick="closePresetDropdown()">
+                <svg width="10" height="10" viewBox="0 0 12 12"><path d="M1.5 1.5L10.5 10.5M10.5 1.5L1.5 10.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+        <div class="preset-dropdown-body" id="presetDropdownBody">
+            <div class="presets-empty" id="presetsEmptyDrop">No saved configs</div>
+        </div>
+        <div class="preset-dropdown-footer">
+            <button class="preset-save-btn" onclick="showSavePresetModal()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                Save Current Rules
+            </button>
+            <div class="preset-export-import">
+                <button class="preset-ie-btn" onclick="exportAllPresets(); closePresetDropdown();" title="Export all presets as file">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Export All
+                </button>
+                <button class="preset-ie-btn" onclick="importAllPresets(); closePresetDropdown();" title="Import all presets from file">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Import All
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Body -->
+    <div class="main-body">
+
+        <!-- Rules Sidebar -->
+        <aside class="rules-sidebar" id="rulesSidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                        <line x1="4" y1="6" x2="4" y2="20"/><line x1="4" y1="2" x2="4" y2="4"/>
+                        <line x1="12" y1="14" x2="12" y2="20"/><line x1="12" y1="2" x2="12" y2="12"/>
+                        <line x1="20" y1="10" x2="20" y2="20"/><line x1="20" y1="2" x2="20" y2="8"/>
+                        <circle cx="4" cy="5" r="2" fill="currentColor" stroke="none"/>
+                        <circle cx="12" cy="13" r="2" fill="currentColor" stroke="none"/>
+                        <circle cx="20" cy="9" r="2" fill="currentColor" stroke="none"/>
+                    </svg>
+                    Rename Rules
+                </div>
+                <button class="sidebar-clear-btn" onclick="clearAllRules()" title="Clear all rules">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="3 6 5 6 21 6"/>
+                        <path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+                    </svg>
+                </button>
+            </div>
+
+           <div class="sidebar-tabs">
+                <button class="stab active" data-tab="text" onclick="switchRuleTab('text')" draggable="true" data-sidebar-order="0">
+                    <span class="stab-drag-handle"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg></span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="4 7 4 4 20 4 20 7"/><line x1="12" y1="4" x2="12" y2="20"/>
+                    </svg>
+                    Text
+                    <span class="stab-tooltip">Drag to reorder</span>
+                </button>
+                <button class="stab" data-tab="transform" onclick="switchRuleTab('transform')" draggable="true" data-sidebar-order="1">
+                    <span class="stab-drag-handle"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg></span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17 3a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+                    </svg>
+                    Transform
+                    <span class="stab-tooltip">Drag to reorder</span>
+                </button>
+                <button class="stab" data-tab="number" onclick="switchRuleTab('number')" draggable="true" data-sidebar-order="2">
+                    <span class="stab-drag-handle"><svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg></span>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M4 9h16M4 15h16M10 3L8 21M16 3l-2 18"/>
+                    </svg>
+                    Number
+                    <span class="stab-tooltip">Drag to reorder</span>
+                </button>
+            </div>
+
+            <div class="sidebar-scroll">
+
+                <!-- TEXT TAB -->
+                <div class="stab-panel active" id="textTab">
+                    <!-- Prefix Rule -->
+                    <div class="rule-group-item">
+                        <button class="rtoggle" onclick="toggleRule('prefix')" id="prefixBtn" draggable="true" data-rule-order="0">
+                            <span class="rtoggle-icon green">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M11 19V5M5 12l6-7 6 7"/></svg>
+                            </span>
+                            <span class="rtoggle-label">Prefix</span>
+                            <span class="rtoggle-drag" title="Drag to reorder">
+                                <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>
+                            </span>
+                            <svg class="rtoggle-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                        </button>
+                        <div class="rule-field" id="prefixRule" style="display:none">
+                            <label class="rfield-label"><span class="rfield-dot green"></span>Add Prefix</label>
+                            <div class="rfield-input-wrap">
+                                <span class="rfield-pfx green">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M11 19V5M5 12l6-7 6 7"/></svg>
+                                </span>
+                                <input type="text" class="rfield-input" id="prefixInput" placeholder="e.g., [DONE]_ or 2024-"/>
+                            </div>
+                            <div class="rfield-hint">Added after name (Variables: [DATE], [PARENT])</div>
+                        </div>
+                    </div>
+
+                    <!-- Suffix Rule -->
+                    <div class="rule-group-item">
+                        <button class="rtoggle" onclick="toggleRule('suffix')" id="suffixBtn" draggable="true" data-rule-order="1">
+                            <span class="rtoggle-icon blue">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M13 5v14M7 12l6 7 6-7"/></svg>
+                            </span>
+                            <span class="rtoggle-label">Suffix</span>
+                            <span class="rtoggle-drag" title="Drag to reorder">
+                                <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>
+                            </span>
+                            <svg class="rtoggle-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                        </button>
+                        <div class="rule-field" id="suffixRule" style="display:none">
+                            <label class="rfield-label"><span class="rfield-dot blue"></span>Add Suffix</label>
+                            <div class="rfield-input-wrap">
+                                <span class="rfield-pfx blue">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M13 5v14M7 12l6 7 6-7"/></svg>
+                                </span>
+                                <input type="text" class="rfield-input" id="suffixInput" placeholder="e.g., _final or -v2"/>
+                            </div>
+                            <div class="rfield-hint">Added after name, before extension</div>
+                        </div>
+                    </div>
+
+                    <!-- Replace Rule -->
+                    <div class="rule-group-item">
+                        <button class="rtoggle" onclick="toggleRule('replace')" id="replaceBtn" draggable="true" data-rule-order="2">
+                            <span class="rtoggle-icon yellow">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                            </span>
+                            <span class="rtoggle-label">Replace</span>
+                            <span class="rtoggle-drag" title="Drag to reorder">
+                                <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>
+                            </span>
+                            <svg class="rtoggle-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                        </button>
+                        <div class="rule-field" id="replaceRule" style="display:none">
+                            <label class="rfield-label"><span class="rfield-dot yellow"></span>Find &amp; Replace</label>
+                            <div class="replace-pair">
+                                <div class="rfield-input-wrap">
+                                    <span class="rfield-pfx yellow">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                                    </span>
+                                    <input type="text" class="rfield-input" id="replaceFind" placeholder="Find (or regex pattern)..."/>
+                                </div>
+                                <div class="replace-arrow">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                                </div>
+                                <div class="rfield-input-wrap">
+                                    <span class="rfield-pfx green">
+                                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>
+                                    </span>
+                                    <input type="text" class="rfield-input" id="replaceWith" placeholder="Replace with..."/>
+                                </div>
+                            </div>
+                            <label class="regex-toggle">
+                                <input type="checkbox" id="regexChk"/>
+                                <span class="regex-slider"></span>
+                                <span class="regex-label">Use Regex</span>
+                            </label>
+                            <div class="rfield-hint" id="regexHint" style="display:none">Regex patterns supported. Use <code>.*</code>, <code>\d+</code>, <code>[a-z]+</code>, etc.</div>
+                        </div>
+                    </div>
+
+                    <!-- Remove Rule -->
+                    <div class="rule-group-item">
+                        <button class="rtoggle" onclick="toggleRule('remove')" id="removeBtn" draggable="true" data-rule-order="3">
+                            <span class="rtoggle-icon red">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                            </span>
+                            <span class="rtoggle-label">Remove</span>
+                            <span class="rtoggle-drag" title="Drag to reorder">
+                                <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>
+                            </span>
+                            <svg class="rtoggle-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                        </button>
+                        <div class="rule-field" id="removeRule" style="display:none">
+                            <label class="rfield-label"><span class="rfield-dot red"></span>Remove Text</label>
+                            <div class="rfield-input-wrap">
+                                <span class="rfield-pfx red">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+                                </span>
+                                <input type="text" class="rfield-input" id="removeText" placeholder="Text to remove..."/>
+                            </div>
+                            <div class="rfield-hint">Removes all occurrences</div>
+                        </div>
+                    </div>
+
+                    <!-- Slice Rule -->
+                    <div class="rule-group-item">
+                        <button class="rtoggle" onclick="toggleRule('slice')" id="sliceBtn" draggable="true" data-rule-order="4">
+                            <span class="rtoggle-icon purple">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                            </span>
+                            <span class="rtoggle-label">Slice (Cut)</span>
+                            <span class="rtoggle-drag" title="Drag to reorder">
+                                <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>
+                            </span>
+                            <svg class="rtoggle-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                        </button>
+                        <div class="rule-field" id="sliceRule" style="display:none">
+                            <label class="rfield-label"><span class="rfield-dot purple"></span>Slice Text</label>
+                            <div class="num-fields slice-stack" style="margin-bottom:0">
+                                <div class="num-field">
+                                    <label>Remove First (chars)</label>
+                                    <input type="number" id="sliceFirst" value="0" min="0"/>
+                                </div>
+                                <div class="num-field">
+                                    <label>Remove Last (chars)</label>
+                                    <input type="number" id="sliceLast" value="0" min="0"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Extension Rule -->
+                    <div class="rule-group-item">
+                        <button class="rtoggle" onclick="toggleRule('extension')" id="extensionBtn" draggable="true" data-rule-order="5">
+                            <span class="rtoggle-icon cyan">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                            </span>
+                            <span class="rtoggle-label">Extension</span>
+                            <span class="rtoggle-drag" title="Drag to reorder">
+                                <svg viewBox="0 0 24 24" fill="currentColor" stroke="none"><circle cx="9" cy="6" r="1.5"/><circle cx="15" cy="6" r="1.5"/><circle cx="9" cy="12" r="1.5"/><circle cx="15" cy="12" r="1.5"/><circle cx="9" cy="18" r="1.5"/><circle cx="15" cy="18" r="1.5"/></svg>
+                            </span>
+                            <svg class="rtoggle-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                        </button>
+                        <div class="rule-field" id="extensionRule" style="display:none">
+                            <label class="rfield-label"><span class="rfield-dot cyan"></span>Change Extension</label>
+                            <div class="rfield-input-wrap">
+                                <span class="rfield-pfx cyan">.</span>
+                                <input type="text" class="rfield-input" id="extensionInput" placeholder="e.g. jpg (without dot)"/>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- TRANSFORM TAB -->
+                <div class="stab-panel" id="transformTab">
+                    <div class="rule-group-label">Case Transform</div>
+                    <div class="transform-grid">
+                        <button class="topt" onclick="selectTransform('none')" id="transform-none"><span class="topt-code">—</span><span class="topt-label" data-i18n="noChange">No Change</span></button>
+                        <button class="topt" onclick="selectTransform('lowercase')" id="transform-lowercase"><span class="topt-code">abc</span><span class="topt-label" data-i18n="lowercase">lowercase</span></button>
+                        <button class="topt" onclick="selectTransform('uppercase')" id="transform-uppercase"><span class="topt-code">ABC</span><span class="topt-label" data-i18n="uppercase">UPPERCASE</span></button>
+                        <button class="topt" onclick="selectTransform('capitalize')" id="transform-capitalize"><span class="topt-code">Abc</span><span class="topt-label" data-i18n="capitalize">Title Case</span></button>
+                        <button class="topt" onclick="selectTransform('snake_case')" id="transform-snake_case"><span class="topt-code">a_b</span><span class="topt-label" data-i18n="snake_case">snake_case</span></button>
+                        <button class="topt" onclick="selectTransform('camelCase')" id="transform-camelCase"><span class="topt-code">aB</span><span class="topt-label" data-i18n="camelCase">camelCase</span></button>
+                        <button class="topt" onclick="selectTransform('kebab-case')" id="transform-kebab-case"><span class="topt-code">a-b</span><span class="topt-label" data-i18n="kebabCase">kebab-case</span></button>
+                        <button class="topt" onclick="selectTransform('trim')" id="transform-trim"><span class="topt-code">⇥⇤</span><span class="topt-label" data-i18n="trim">Trim</span></button>
+                    </div>
+                </div>
+
+                <!-- NUMBERING TAB -->
+                <div class="stab-panel" id="numberTab">
+                    <div class="rule-group-label">Numeric Sequence</div>
+                    <div class="num-fields">
+                        <div class="num-field">
+                            <label>Start</label>
+                            <input type="number" id="numericStart" value="1" min="0" oninput="updateNumberPreview()"/>
+                        </div>
+                        <div class="num-field">
+                            <label>Padding</label>
+                            <input type="number" id="numericPadding" value="3" min="1" max="10" oninput="updateNumberPreview()"/>
+                        </div>
+                        <div class="num-field full">
+                            <label>Prefix</label>
+                            <input type="text" id="numericPrefix" placeholder="e.g., img_" oninput="updateNumberPreview()"/>
+                        </div>
+                    </div>
+                    <div class="num-preview-label">Preview</div>
+                    <div class="num-preview" id="numberPreviewList"></div>
+                </div>
+
+            </div>
+
+           <div class="sidebar-footer">
+                <button class="btn btn-apply" onclick="applyAllRules()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                    Apply to All
+                </button>
+            </div>
+        </aside>
+
+        <!-- Content Panel -->
+        <div class="content-panel">
+
+            <!-- Stats & Filter Bar -->
+            <div class="infobar" id="infobar" style="display:none">
+                <div class="infobar-stats">
+                    <span class="badge badge-file" id="filesCount">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        0 files
+                    </span>
+                    <span class="badge badge-folder" id="foldersCount">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+                        0 folders
+                    </span>
+                    <span class="badge badge-total" id="totalCount">
+                        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                        0 total
+                    </span>
+                    <span class="sel-info" id="selectionInfo"></span>
+                </div>
+                <div class="infobar-filter">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+                    <input type="text" class="filter-input" id="filterInput" placeholder="Filter files..." oninput="applyFilter()"/>
+                    <button class="filter-clear" onclick="clearFilter()" id="filterClearBtn" style="display:none">
+                        <svg width="10" height="10" viewBox="0 0 12 12"><path d="M1.5 1.5L10.5 10.5M10.5 1.5L1.5 10.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- File List -->
+            <div class="file-area" id="fileArea">
+
+                <!-- Empty State -->
+                <div class="empty-state" id="emptyState">
+                    <div class="empty-icon-wrap">
+                        <div class="empty-icon-glow"></div>
+                        <div class="empty-icon">
+                            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/>
+                                <line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/>
+                            </svg>
+                        </div>
+                    </div>
+                    <h2 class="empty-title">No folder loaded</h2>
+                    <p class="empty-desc">Browse to a folder or paste a path above to start renaming files.</p>
+                    <div class="empty-steps">
+                        <div class="estep"><div class="estep-n">1</div><span>Load a folder</span></div>
+                        <div class="estep-sep"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+                        <div class="estep"><div class="estep-n">2</div><span>Apply Rules</span></div>
+                        <div class="estep-sep"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></div>
+                        <div class="estep"><div class="estep-n">3</div><span>Rename All</span></div>
+                    </div>
+                    <div class="empty-keys">
+                        <kbd>Ctrl+Enter</kbd> Load &nbsp;·&nbsp;
+                        <kbd>Ctrl+Shift+V</kbd> Paste &amp; Load &nbsp;·&nbsp;
+                        <kbd>Ctrl+S</kbd> Rename
+                    </div>
+                </div>
+
+                <!-- File Table -->
+                <div class="file-table-wrap" id="fileTableWrap" style="display:none">
+                    <table class="file-table">
+                        <thead>
+                            <tr>
+                                <th class="col-check">
+                                    <label class="check-all" title="Select all"><input type="checkbox" id="selectAllChk" onchange="handleSelectAll(this)"/><span class="chk-box"></span></label>
+                                </th>
+                                <th class="col-name sortable" onclick="sortTable('name')"><div class="th-inner">Name <span class="sort-icon"></span></div></th>
+                                <th class="col-ext sortable" onclick="sortTable('extension')"><div class="th-inner">Ext <span class="sort-icon"></span></div></th>
+                                <th class="col-type sortable" onclick="sortTable('type')"><div class="th-inner">Type <span class="sort-icon"></span></div></th>
+                                <th class="col-size sortable" onclick="sortTable('size')"><div class="th-inner">Size <span class="sort-icon"></span></div></th>
+                                <th class="col-newname"><div class="th-inner">New Name</div></th>
+                                <th class="col-status"><div class="th-inner" style="justify-content:center">Status</div></th>
+                            </tr>
+                        </thead>
+                        <tbody id="fileListBody"></tbody>
+                    </table>
+                </div>
+
+            </div>
+
+            <!-- Result Log -->
+            <div class="result-log" id="resultLog"></div>
+
+            <!-- Action Bar -->
+            <div class="action-bar" id="actionBar" style="display:none">
+                <div class="action-bar-left">
+                    <button class="btn btn-ghost" onclick="resetAllNewNames()">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+                        Reset Names
+                    </button>
+                    <button class="btn btn-ghost" id="applySelectedBtn" onclick="applyRulesToSelected()" style="display:none">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 013 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                        Apply to Selected
+                    </button>
+                </div>
+                <div class="action-bar-right">
+                    <button class="btn btn-secondary" id="validateBtn" onclick="runNameValidation()" title="Validate names (check for invalid characters, duplicates, OS limits)">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 12 11 14 15 10"/></svg>
+                        Validate
+                    </button>
+                    <button class="btn btn-success" id="renameBtn" onclick="executeRename()">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+                        Rename All
+                    </button>
+					<button class="btn btn-warning" id="undoBtn" onclick="undoRename()" style="display:none">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 00-9-9 9 9 0 00-6 2.3L3 13"/></svg>
+                        Undo Last
+                    </button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
