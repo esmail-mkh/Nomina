@@ -92,19 +92,22 @@ jobs:
           echo "DYLD_FALLBACK_LIBRARY_PATH=${brew_prefix}/lib:${DYLD_FALLBACK_LIBRARY_PATH:-}" >> $GITHUB_ENV
 
       - name: Install Python deps
+        # Always use `python -m pip` so pip is bound to the setup-python
+        # interpreter. A bare `pip` can resolve to a different Python on
+        # Windows runners (Chocolatey/Scoop/system) and silently install
+        # cairosvg into the wrong site-packages.
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pyinstaller cairosvg pillow
-          # Linux: pywebview needs PyGObject + QtWebEngine fallback
-          python -c "import sys; sys.exit(0)"
+          python -m pip install -r requirements.txt
+          python -m pip install pyinstaller cairosvg pillow
+          python -c "import cairosvg, PIL; print('cairosvg', cairosvg.__version__, '/ Pillow', PIL.__version__)"
 
       - name: Install PyGObject (Linux only)
         if: matrix.os == 'ubuntu-latest'
         # PyGObject ≥3.52 requires girepository-2.0 (GLib ≥2.80), which is
         # only packaged on Ubuntu 24.10+. ubuntu-latest is still 24.04, so
         # pin to the last 3.50.x release that uses girepository-1.0.
-        run: pip install "PyGObject<3.52"
+        run: python -m pip install "PyGObject<3.52"
 
       - name: Generate platform icons
         shell: bash
