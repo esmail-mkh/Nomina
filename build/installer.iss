@@ -14,7 +14,7 @@
 #define AppName      "Nomina"
 #define AppPublisher "Emkh"
 #define AppExeName   "Nomina.exe"
-#define AppId        "{A7F3B2C1-D4E5-6789-ABCD-EF0123456789}"
+#define AppId        "{{A7F3B2C1-D4E5-6789-ABCD-EF0123456789}"
 
 [Setup]
 AppId={#AppId}
