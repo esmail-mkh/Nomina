@@ -22,7 +22,7 @@
   <a href="https://github.com/esmail-mkh/nomina/releases/latest"><img src="https://img.shields.io/github/v/release/esmail-mkh/nomina?color=7c6dfa&style=flat-square&label=release" /></a>
 </p>
 
-[English 🇬🇧](./README.md) · [دانلود](#-دانلود) · [امکانات](#-امکانات) · [نصب](#-نصب) · [بیلد از سورس](#-بیلد-از-سورس) · [استفاده](#-استفاده) · [میان‌برها](#-میانبرهای-صفحه‌کلید)
+[English 🇬🇧](./README.md) · [دانلود](#%EF%B8%8F-دانلود) · [امکانات](#-امکانات) · [نصب](#-نصب) · [بیلد از سورس](#%EF%B8%8F-بیلد-از-سورس) · [استفاده](#-استفاده) · [میان‌برها](#%EF%B8%8F-میان‌برهای-صفحه‌کلید)
 
 </div>
 
@@ -40,21 +40,27 @@
 
 ---
 
+<div dir="rtl">
+
 ## ⬇️ دانلود
 
 از [**آخرین ریلیز**](https://github.com/esmail-mkh/nomina/releases/latest) یک نسخه‌ی آماده‌ی نصب دانلود کنید — بدون نیاز به نصب پایتون.
 
 | پلتفرم | فایل | توضیح |
 |---|---|---|
-| 🖥️ **ویندوز — نصب‌کننده** ⭐ | `Nomina-Setup-vX.Y.Z.exe`           | نصب‌کننده را اجرا کن — میان‌بر دسکتاپ و منوی Start اضافه می‌شود، شامل Uninstaller |
-| 🖥️ **ویندوز — پرتابل**     | `Nomina-vX.Y.Z-windows-x64.zip`     | از حالت فشرده خارج کن و `Nomina.exe` را اجرا کن — نیازی به نصب نیست |
-| 🐧 **لینوکس (x64)**        | `Nomina-vX.Y.Z-linux-x64.tar.gz`    | با `tar -xzf` باز کن و `./Nomina/Nomina` را اجرا کن |
-| 🐧 **لینوکس (ARM64)**      | `Nomina-vX.Y.Z-linux-arm64.tar.gz`  | مشابه بالا، برای Raspberry Pi 4/5 یا سرورهای ARM |
-| 🍎 **مک‌اواس (Apple Silicon)** | `Nomina-vX.Y.Z-macos-arm64.zip` | از حالت فشرده خارج کن و `Nomina.app` را به Applications بکش. اولین اجرا: راست‌کلیک → *Open*. روی Intel Mac هم با Rosetta 2 اجرا می‌شود |
+| 🖥️ **ویندوز — نصب‌کننده** ⭐ | `Nomina-Setup-vX.Y.Z.exe` | نصب‌کننده را اجرا کن — میان‌بر دسکتاپ و منوی Start اضافه می‌شود، شامل Uninstaller |
+| 🖥️ **ویندوز — پرتابل** | `Nomina-vX.Y.Z-windows-x64.zip` | از حالت فشرده خارج کن و `Nomina.exe` را اجرا کن — نیازی به نصب نیست |
+| 🐧 **لینوکس (x64)** | `Nomina-vX.Y.Z-linux-x64.tar.gz` | با `tar -xzf` باز کن و `./Nomina/Nomina` را اجرا کن |
+| 🐧 **لینوکس (ARM64)** | `Nomina-vX.Y.Z-linux-arm64.tar.gz` | مشابه بالا، برای Raspberry Pi 4/5 یا سرورهای ARM |
+| 🍎 **مک‌اواس (Apple Silicon)** | `Nomina-vX.Y.Z-macos-arm64.zip` | از حالت فشرده خارج کن و `Nomina.app` را به Applications بکش. اولین اجرا: راست‌کلیک ← *Open*. روی Intel Mac هم با Rosetta 2 اجرا می‌شود |
 
 هر ریلیز همراه با فایل `SHA256SUMS.txt` منتشر می‌شود تا بتوانید صحت دانلود را بررسی کنید.
 
+</div>
+
 ---
+
+<div dir="rtl">
 
 ## ✨ معرفی
 
@@ -62,7 +68,11 @@
 
 > با وسواس ساخته شده برای وضوح و سرعت. بدون چیزهای اضافه، بدون ردیابی، بدون سورپرایز.
 
+</div>
+
 ---
+
+<div dir="rtl">
 
 ## 🚀 امکانات
 
@@ -84,7 +94,11 @@
 | 🛡️ **ایمن به‌صورت پیش‌فرض** | تا روی دکمه‌ی **Rename** نزنید، هیچ تغییری روی دیسک اعمال نمی‌شود |
 | 🎯 **حذف متادیتا** | امکان اختیاری حذف متادیتای فایل هنگام تغییر نام |
 
+</div>
+
 ---
+
+<div dir="rtl">
 
 ## 🧩 موتور قانون‌ها
 
@@ -100,7 +114,11 @@
 
 هر قانون **مستقل قابل فعال/غیرفعال** است و می‌توانید روی **همه‌ی آیتم‌ها** یا فقط **آیتم‌های انتخاب‌شده** اعمالش کنید.
 
+</div>
+
 ---
+
+<div dir="rtl">
 
 ## 📦 نصب
 
@@ -109,7 +127,9 @@
 - **Python 3.10 یا بالاتر**
 - **ویندوز 10/11** (Edge WebView2)، **لینوکس** (GTK 3 + WebKit2GTK 4.1)، یا **macOS 11+**
 
-### Setup
+### راه‌اندازی
+
+</div>
 
 ```bash
 # 1. Clone the repository
@@ -130,18 +150,26 @@ pip install -r requirements.txt
 python main.py
 ```
 
+<div dir="rtl">
+
 > 💡 **نکته:** در اولین اجرا، نومینا پوشه‌ی تنظیماتش را اینجا می‌سازد:  
 > `Documents/EMKH_Apps/Nomina/` (در لینوکس/مک از `~/Documents/...` استفاده کنید) — برای ذخیره‌ی پریست‌ها و تنظیمات.
 
+</div>
+
 ---
+
+<div dir="rtl">
 
 ## 🏗️ بیلد از سورس
 
 با PyInstaller می‌توانید یک اپلیکیشن مستقل و قابل توزیع برای پلتفرم خودتان بسازید.
 
+</div>
+
 ```bash
 # Install build tooling
-pip install pyinstaller cairosvg pillow
+pip install pyinstaller pillow
 
 # Generate platform-specific icons from build/icon.svg
 python build/make_icons.py
@@ -149,6 +177,8 @@ python build/make_icons.py
 # Build (onedir) — output goes to dist/Nomina/  (or dist/Nomina.app on macOS)
 pyinstaller build/nomina.spec --noconfirm --clean
 ```
+
+<div dir="rtl">
 
 برای کاهش حجم خروجی، **UPX** نصب کنید و `--upx-dir /path/to/upx` را اضافه کنید (فقط روی ویندوز و لینوکس — مک به‌صورت خودکار رد می‌شود). فایل spec از قبل لیست استثناهای ایمن را دارد.
 
@@ -165,7 +195,11 @@ pyinstaller build/nomina.spec --noconfirm --clean
 
 برای انتشار یک ریلیز: **Actions → Build & Release → Run workflow → وارد کردن شماره نسخه → اجرا.**
 
+</div>
+
 ---
+
+<div dir="rtl">
 
 ## 🎬 استفاده
 
@@ -177,7 +211,11 @@ pyinstaller build/nomina.spec --noconfirm --clean
 ۶. روی **Validate** بزنید تا نام‌های نامعتبر یا تداخل‌ها مشخص شوند.  
 ۷. روی **Rename** بزنید تا تغییرات روی دیسک اعمال شوند.
 
+</div>
+
 ---
+
+<div dir="rtl">
 
 ## ⌨️ میان‌برهای صفحه‌کلید
 
@@ -188,11 +226,13 @@ pyinstaller build/nomina.spec --noconfirm --clean
 | `Ctrl + S` | اجرای Rename |
 | `Esc` | بستن هر مودال باز |
 
+</div>
+
 ---
 
-## 🛠️ پشته‌ی فناوری
+<div dir="rtl">
 
-<div align="center">
+## 🛠️ پشته‌ی فناوری
 
 | لایه | فناوری |
 |---|---|
@@ -205,7 +245,11 @@ pyinstaller build/nomina.spec --noconfirm --clean
 
 ---
 
+<div dir="rtl">
+
 ## 📁 ساختار پروژه
+
+</div>
 
 ```
 nomina/
@@ -220,7 +264,7 @@ nomina/
 │   ├── make_icons.py             # تبدیل SVG به .ico / .png / .icns
 │   └── nomina.spec               # فایل PyInstaller (onedir، چندپلتفرمی، آماده‌ی UPX)
 ├── docs/
-│   └── screenshot.png            # تصویر استفاده‌شده در README
+│   └── screenshot.JPG            # تصویر استفاده‌شده در README
 └── .github/
     └── workflows/
         └── release.yml           # workflow انتشار دستی (Win/Linux/macOS)
@@ -228,9 +272,9 @@ nomina/
 
 ---
 
-## 👤 توسعه‌دهنده
-
 <div align="center">
+
+## 👤 توسعه‌دهنده
 
 **E.MKH** — _توسعه‌دهنده پایتون_  
 _ابزارهایی می‌سازم که ساده و روان به نظر برسند._
@@ -242,9 +286,13 @@ _ابزارهایی می‌سازم که ساده و روان به نظر برس
 
 ---
 
+<div dir="rtl">
+
 ## 📜 مجوز
 
 این پروژه تحت مجوز **MIT** منتشر شده — جزئیات کامل در فایل [LICENSE](LICENSE) آمده است.
+
+</div>
 
 ---
 
