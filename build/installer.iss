@@ -4,7 +4,6 @@
 ; 
 ; Build locally (Windows only):
 ;   iscc build\installer.iss /DAppVersion=1.0.0
-;
 ; ─────────────────────────────────────────────────────────────
 
 #ifndef AppVersion
@@ -23,9 +22,9 @@ AppVersion={#AppVersion}
 AppPublisher={#AppPublisher}
 DefaultDirName={autopf}\{#AppName}
 DefaultGroupName={#AppName}
+DisableDirPage=no
 AllowNoIcons=yes
 DisableProgramGroupPage=yes
-DisableDirPage=no
 PrivilegesRequired=admin
 OutputDir=..\dist
 OutputBaseFilename=Nomina-Setup-{#AppVersion}
