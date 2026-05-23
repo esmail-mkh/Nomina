@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"  stop-color="#7c6dfa"/>
+      <stop offset="100%" stop-color="#b06af5"/>
+    </linearGradient>
+    <linearGradient id="sheen" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.18"/>
+      <stop offset="60%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="12"/>
+      <feOffset dx="0" dy="10" result="offsetblur"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.3"/></feComponentTransfer>
+      <feMerge>
+        <feMergeNode/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <!-- rounded squircle background -->
+  <rect x="64" y="64" width="896" height="896" rx="220" ry="220" fill="url(#bg)"/>
+  <rect x="64" y="64" width="896" height="896" rx="220" ry="220" fill="url(#sheen)"/>
+
+  <g filter="url(#shadow)">
+    <g transform="translate(512,512) scale(22) translate(-12,-12)"
+       fill="none" stroke="#ffffff" stroke-width="2.2"
+       stroke-linecap="round" stroke-linejoin="round">
+      <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+      <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+    </g>
+  </g>
+</svg>
