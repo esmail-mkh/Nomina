@@ -1,4 +1,4 @@
-﻿/* ===================================================
+/* ===================================================
    Nomina — Advanced Batch File Renamer  (script.js)
    Updated with: Sorting, Recursive, Slice, Ext, Undo
 =================================================== */
@@ -892,6 +892,35 @@ async function browseFolder() {
 }
 
 // ===== SORTING =====
+// Natural / alphanumeric collator — numeric runs in a name are compared as
+// numbers (so `img2` < `img10`), and locale + case rules are handled correctly.
+// One instance is reused for performance — building a Collator per compare is slow.
+const _naturalCollator = new Intl.Collator(undefined, {
+    numeric: true,
+    sensitivity: 'base',
+    caseFirst: 'lower',
+    usage: 'sort',
+});
+
+// Split "imageye_1_10-l2oFOaQFl0.jpg" → ["imageye_1_10-l2oFOaQFl0", ".jpg"]
+// so the extension only acts as a final tie-breaker. Hidden files like
+// ".gitignore" are treated as having no extension.
+function _splitNameExt(name) {
+    if (!name) return ['', ''];
+    const lastDot = name.lastIndexOf('.');
+    if (lastDot <= 0 || lastDot === name.length - 1) return [name, ''];
+    return [name.substring(0, lastDot), name.substring(lastDot)];
+}
+
+function naturalCompareName(a, b) {
+    if (a === b) return 0;
+    const [aBase, aExt] = _splitNameExt(a);
+    const [bBase, bExt] = _splitNameExt(b);
+    const baseCmp = _naturalCollator.compare(aBase, bBase);
+    if (baseCmp !== 0) return baseCmp;
+    return _naturalCollator.compare(aExt, bExt);
+}
+
 function sortTable(column) {
     if (currentSortCol === column) {
         currentSortAsc = !currentSortAsc;
@@ -899,29 +928,39 @@ function sortTable(column) {
         currentSortCol = column;
         currentSortAsc = true;
     }
-    
+
     document.querySelectorAll('th.sortable').forEach(th => th.classList.remove('asc', 'desc'));
     const th = document.querySelector(`.col-${column}`);
     if(th) th.classList.add(currentSortAsc ? 'asc' : 'desc');
 
     sortItemsArray(currentSortCol, currentSortAsc);
-    
+
     // رفرش کردن انتخاب‌ها بعد از سورت
     selectedItemIndices.clear();
     currentItems.forEach((_, i) => selectedItemIndices.add(i));
-    
+
     renderFileList();
 }
 
 function sortItemsArray(col, asc) {
+    const dir = asc ? 1 : -1;
     currentItems.sort((a, b) => {
-        let valA = a[col] || ''; let valB = b[col] || '';
-        if (col === 'size') { valA = a.size || 0; valB = b.size || 0; }
-        if (col === 'extension') { valA = a.extension || ''; valB = b.extension || ''; }
-        
-        if (valA < valB) return asc ? -1 : 1;
-        if (valA > valB) return asc ? 1 : -1;
-        return 0;
+        let cmp = 0;
+
+        if (col === 'size') {
+            cmp = (a.size || 0) - (b.size || 0);
+            if (cmp === 0) cmp = naturalCompareName(a.name || '', b.name || '');
+        } else if (col === 'extension') {
+            cmp = _naturalCollator.compare(a.extension || '', b.extension || '');
+            if (cmp === 0) cmp = naturalCompareName(a.name || '', b.name || '');
+        } else if (col === 'type') {
+            cmp = _naturalCollator.compare(a.type || '', b.type || '');
+            if (cmp === 0) cmp = naturalCompareName(a.name || '', b.name || '');
+        } else {
+            cmp = naturalCompareName(a[col] || '', b[col] || '');
+        }
+
+        return cmp * dir;
     });
 }
 
