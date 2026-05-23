@@ -181,7 +181,7 @@ jobs:
           }
           Write-Host "Running Inno Setup with AppVersion=$version"
           & $isccPath build\installer.iss /DAppVersion=$version /Q
-          $installerName = "Nomina-Setup-$version.exe"
+          $installerName = "Nomina-Setup-v$version.exe"
           if (-not (Test-Path "dist\$installerName")) {
             throw "Installer was not created at dist\$installerName"
           }
