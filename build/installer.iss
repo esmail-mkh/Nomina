@@ -27,7 +27,7 @@ AllowNoIcons=yes
 DisableProgramGroupPage=yes
 PrivilegesRequired=admin
 OutputDir=..\dist
-OutputBaseFilename=Nomina-Setup-{#AppVersion}
+OutputBaseFilename=Nomina-Setup-v{#AppVersion}
 SetupIconFile=icon.ico
 Compression=lzma2/max
 SolidCompression=yes
@@ -43,6 +43,7 @@ Name: "desktopicon"; Description: "Create a &desktop shortcut"; GroupDescription
 Name: "startmenu";    Description: "Create a &Start Menu shortcut"; GroupDescription: "Additional shortcuts:"
 
 [Files]
+; Copy EVERYTHING from the onedir PyInstaller output
 Source: "..\dist\Nomina\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
 
 [Icons]
