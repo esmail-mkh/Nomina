@@ -22,7 +22,7 @@ A modern, beautiful desktop app for renaming files and folders in bulk — with 
   <a href="https://github.com/esmail-mkh/nomina/releases/latest"><img src="https://img.shields.io/github/v/release/esmail-mkh/nomina?color=7c6dfa&style=flat-square&label=release" /></a>
 </p>
 
-[فارسی 🇮🇷](./README-fa.md) · [Download](#-download) · [Features](#-features) · [Install](#-installation) · [Build](#-build-from-source) · [Usage](#-usage) · [Shortcuts](#-keyboard-shortcuts)
+[🇮🇷 فارسی](./README-fa.md) · [Download](#-download) · [Features](#-features) · [Install](#-installation) · [Build](#-build-from-source) · [Usage](#-usage) · [Shortcuts](#-keyboard-shortcuts)
 
 </div>
 
@@ -46,9 +46,11 @@ Grab a pre-built binary from the [**latest release**](https://github.com/esmail-
 
 | Platform | File | Notes |
 |---|---|---|
-| 🪟 **Windows x64**  | `Nomina-vX.Y.Z-windows-x64.zip`  | Unzip and run `Nomina.exe` |
-| 🐧 **Linux x64**    | `Nomina-vX.Y.Z-linux-x64.tar.gz` | `tar -xzf` then `./Nomina/Nomina` |
-| 🍎 **macOS**        | `Nomina-vX.Y.Z-macos.zip`        | Unzip → drag `Nomina.app` to Applications. First launch: right-click → *Open* |
+| 🖥️ **Windows Installer** ⭐ | `Nomina-Setup-vX.Y.Z.exe`        | Run the installer — adds Start Menu & Desktop shortcuts, includes uninstaller |
+| 🖥️ **Windows Portable**    | `Nomina-vX.Y.Z-windows-x64.zip`  | Unzip and run `Nomina.exe` — no installation needed |
+| 🐧 **Linux x64**           | `Nomina-vX.Y.Z-linux-x64.tar.gz` | `tar -xzf` then `./Nomina/Nomina` |
+| 🐧 **Linux ARM64**         | `Nomina-vX.Y.Z-linux-arm64.tar.gz` | Same as above, on Raspberry Pi 4/5 or ARM servers |
+| 🍎 **macOS (Apple Silicon)** | `Nomina-vX.Y.Z-macos-arm64.zip` | Unzip → drag `Nomina.app` to Applications. First launch: right-click → *Open*. Runs on Intel via Rosetta 2 |
 
 Every release ships with a `SHA256SUMS.txt` so you can verify your download.
 
@@ -72,9 +74,12 @@ Every release ships with a `SHA256SUMS.txt` so you can verify your download.
 | 🔄 **Live Preview** | See every new name update in real time as you tweak rules |
 | 🧠 **Smart Validation** | Detects invalid characters, name conflicts, and reserved names |
 | 💾 **Presets** | Save and reuse your favorite rule combinations |
+| 📤 **Import / Export Presets** | Export presets to a `.json` file or import from one — share across machines |
+| ↩️ **Undo** | Undo the last rename batch in one click |
+| 🔁 **Recursive Mode** | Optionally scan subfolders when loading a directory |
 | 🌐 **Bilingual UI** | Full English & Persian (RTL) support, switch on the fly |
 | 🌗 **Dark / Light** | Beautiful themes that respect your eyes |
-| 🖱️ **Drag & Drop** | Drop a folder anywhere on the window to load it |
+| 🖱️ **Drag & Drop** | Drop files or a folder anywhere on the window to load them |
 | 📋 **Clipboard Paste** | `Ctrl+Shift+V` to load a copied path instantly |
 | 🛡️ **Safe by Default** | Nothing is renamed until you hit **Rename** — preview first, commit later |
 | 🎯 **Metadata Cleanup** | Optional removal of file metadata on rename |
@@ -152,10 +157,11 @@ For smaller binaries, install **UPX** and add `--upx-dir /path/to/upx` (Windows 
 This repo ships with a manual-dispatch workflow at [`.github/workflows/release.yml`](.github/workflows/release.yml) that:
 
 1. ✅ Asks for a **release version** when triggered
-2. 🛠️ Builds in parallel on **Windows**, **Linux**, and **macOS** runners
+2. 🛠️ Builds in parallel on **Windows x64**, **Linux x64**, **Linux ARM64**, and **macOS ARM64** runners
 3. 🎨 Generates platform icons from `build/icon.svg`
 4. 📦 Compresses with the **latest UPX** (auto-fetched from upstream)
-5. 🚀 Publishes a **GitHub Release** with all three archives + `SHA256SUMS.txt`
+5. 🖥️ Builds a **Windows Installer** (`.exe`) with Inno Setup alongside the portable `.zip`
+6. 🚀 Publishes a **GitHub Release** with all archives, the installer, and `SHA256SUMS.txt`
 
 To cut a release: **Actions → Build & Release → Run workflow → enter version → run.**
 
@@ -191,7 +197,7 @@ To cut a release: **Actions → Build & Release → Run workflow → enter versi
 | Layer | Technology |
 |---|---|
 | 🐍 **Core** | Python 3.10+ |
-| 🪟 **Window / Bridge** | [pywebview](https://pywebview.flowrl.com/) |
+| 🖥️ **Window / Bridge** | [pywebview](https://pywebview.flowrl.com/) |
 | 🎨 **UI** | HTML5 · CSS3 · Vanilla JavaScript |
 | 📋 **Utilities** | pyperclip, pathlib, tkinter (folder picker) |
 
