@@ -1,5 +1,4 @@
 name: Build & Release
-
 on:
   workflow_dispatch:
     inputs:
@@ -17,14 +16,14 @@ on:
         required: false
         type: boolean
         default: false
-
 permissions:
   contents: write
 
 jobs:
-  # ─────────────────────────────────────────────────────────────
-  # Build matrix: Windows, Linux, macOS — all onedir, all icon-embedded
-  # ─────────────────────────────────────────────────────────────
+  #─────────────────────────────────────────────────────────────
+  # Build matrix: Windows x64, Linux x64, Linux ARM64,
+  #               macOS Intel, macOS Apple Silicon
+  #─────────────────────────────────────────────────────────────
   build:
     name: Build (${{ matrix.label }})
     runs-on: ${{ matrix.os }}
@@ -32,21 +31,43 @@ jobs:
       fail-fast: false
       matrix:
         include:
+          # ── Windows x64 ──────────────────────────────────
           - os: windows-latest
-            label: windows
+            label: windows-x64
             ext: zip
             artifact_glob: 'dist/Nomina'
             archive_name: Nomina-v${{ inputs.version }}-windows-x64
+            upx_asset_pattern: 'win64\.zip$'
+
+          # ── Linux x64 ────────────────────────────────────
           - os: ubuntu-latest
-            label: linux
+            label: linux-x64
             ext: tar.gz
             artifact_glob: 'dist/Nomina'
             archive_name: Nomina-v${{ inputs.version }}-linux-x64
-          - os: macos-latest
-            label: macos
+            upx_asset_pattern: 'amd64_linux\.tar\.xz$'
+
+          # ── Linux ARM64 (Raspberry Pi 4/5, ARM servers) ──
+          - os: ubuntu-24.04-arm
+            label: linux-arm64
+            ext: tar.gz
+            artifact_glob: 'dist/Nomina'
+            archive_name: Nomina-v${{ inputs.version }}-linux-arm64
+            upx_asset_pattern: 'arm64_linux\.tar\.xz$'
+
+          # ── macOS Intel (2019 and older) ─────────────────
+          - os: macos-13
+            label: macos-x64
             ext: zip
             artifact_glob: 'dist/Nomina.app'
-            archive_name: Nomina-v${{ inputs.version }}-macos
+            archive_name: Nomina-v${{ inputs.version }}-macos-x64
+
+          # ── macOS Apple Silicon (M1/M2/M3/M4) ────────────
+          - os: macos-latest
+            label: macos-arm64
+            ext: zip
+            artifact_glob: 'dist/Nomina.app'
+            archive_name: Nomina-v${{ inputs.version }}-macos-arm64
 
     steps:
       - name: Checkout
@@ -58,84 +79,49 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
 
+      # ─────────────────────────────────────────────────────────
+      # Linux system deps — runs on BOTH linux-x64 and linux-arm64
+      # ─────────────────────────────────────────────────────────
       - name: Install Linux system deps
-        if: matrix.os == 'ubuntu-latest'
+        if: startsWith(matrix.label, 'linux')
         run: |
           sudo apt-get update
           sudo apt-get install -y \
             libgtk-3-0 libgtk-3-dev \
             libwebkit2gtk-4.1-0 libwebkit2gtk-4.1-dev \
             gir1.2-webkit2-4.1 \
-            libcairo2-dev pkg-config python3-gi gir1.2-gtk-3.0 \
+            pkg-config python3-gi gir1.2-gtk-3.0 \
             libgirepository1.0-dev
 
-      - name: Install Cairo (Windows)
-        if: matrix.os == 'windows-latest'
-        shell: pwsh
-        run: |
-          # MSYS2 ships preinstalled on GitHub's windows-latest runners.
-          # Install Cairo so libcairo-2.dll exists at C:\msys64\mingw64\bin.
-          # NOTE: we deliberately do NOT prepend this to global PATH here —
-          # MSYS2 also ships its own python/pip, and putting it first would
-          # cause `pip install cairosvg` (next step) to install into the
-          # wrong interpreter. PATH is set scoped to the icon-gen step.
-          C:\msys64\usr\bin\pacman.exe -S --noconfirm --needed mingw-w64-x86_64-cairo
-
-      - name: Install Cairo (macOS)
-        if: matrix.os == 'macos-latest'
-        run: |
-          brew install cairo
-          # macos-latest is Apple Silicon → Homebrew lives at /opt/homebrew.
-          # cairocffi's dlopen doesn't search Homebrew paths by default, so
-          # export DYLD_FALLBACK_LIBRARY_PATH for subsequent steps.
-          brew_prefix="$(brew --prefix)"
-          echo "DYLD_FALLBACK_LIBRARY_PATH=${brew_prefix}/lib:${DYLD_FALLBACK_LIBRARY_PATH:-}" >> $GITHUB_ENV
-
       - name: Install Python deps
-        # Always use `python -m pip` so pip is bound to the setup-python
-        # interpreter. A bare `pip` can resolve to a different Python on
-        # Windows runners (Chocolatey/Scoop/system) and silently install
-        # cairosvg into the wrong site-packages.
         run: |
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
-          python -m pip install pyinstaller cairosvg pillow
-          # Sanity check: confirm the packages landed in the active Python.
-          # Don't import cairosvg here — it tries to dlopen libcairo at import
-          # time, which only succeeds once make_icons.py registers the DLL dir.
-          python -c "import PIL, PyInstaller; import importlib.util as u; assert u.find_spec('cairosvg'), 'cairosvg missing'; print('ok')"
+          python -m pip install pyinstaller pillow
+          python -c "import PIL, PyInstaller; print('deps ok')"
 
       - name: Install PyGObject (Linux only)
-        if: matrix.os == 'ubuntu-latest'
-        # PyGObject ≥3.52 requires girepository-2.0 (GLib ≥2.80), which is
-        # only packaged on Ubuntu 24.10+. ubuntu-latest is still 24.04, so
-        # pin to the last 3.50.x release that uses girepository-1.0.
+        if: startsWith(matrix.label, 'linux')
         run: python -m pip install "PyGObject<3.52"
 
       - name: Generate platform icons
-        # Use the default shell per OS (pwsh on Windows, bash elsewhere) so
-        # `python` resolves to setup-python's interpreter. Git Bash on Windows
-        # doesn't inherit setup-python's PATH reliably, which breaks imports.
-        # CAIRO_DLL_DIR is read by make_icons.py to register the Cairo DLL
-        # directory via os.add_dll_directory() (Python 3.8+ ignores PATH for
-        # ctypes DLL loads on Windows).
-        env:
-          CAIRO_DLL_DIR: ${{ matrix.os == 'windows-latest' && 'C:\msys64\mingw64\bin' || '' }}
+        # Converts build/icon.png into icon.ico (Windows) and icon.icns (macOS).
+        # Linux uses icon.png directly. On non-macOS runners, icon.icns is skipped.
         run: python build/make_icons.py
 
       # ─────────────────────────────────────────────────────────
-      # UPX: fetch the latest release directly from upx/upx so we
-      # always get current binaries (apt/brew versions lag). Skipped
-      # on macOS — UPX breaks Mach-O bundles & trips Gatekeeper.
+      # UPX — latest release, fetched per-platform.
+      # Skipped on macOS (breaks Mach-O + trips Gatekeeper).
       # ─────────────────────────────────────────────────────────
       - name: Install latest UPX (Windows)
-        if: matrix.os == 'windows-latest'
+        if: startsWith(matrix.label, 'windows')
         shell: pwsh
         run: |
           $latest = Invoke-RestMethod -Uri "https://api.github.com/repos/upx/upx/releases/latest" `
                      -Headers @{ "User-Agent" = "gh-actions" }
-          $asset = $latest.assets | Where-Object { $_.name -match "win64\.zip$" } | Select-Object -First 1
-          if (-not $asset) { throw "Could not find UPX win64 asset" }
+          $pattern = "${{ matrix.upx_asset_pattern }}"
+          $asset = $latest.assets | Where-Object { $_.name -match $pattern } | Select-Object -First 1
+          if (-not $asset) { throw "Could not find UPX asset matching $pattern" }
           Write-Host "Downloading $($asset.name) ($($latest.tag_name))"
           Invoke-WebRequest -Uri $asset.browser_download_url -OutFile upx.zip
           Expand-Archive upx.zip -DestinationPath upx-tmp
@@ -146,11 +132,16 @@ jobs:
           & $upxExe.FullName --version
 
       - name: Install latest UPX (Linux)
-        if: matrix.os == 'ubuntu-latest'
+        if: startsWith(matrix.label, 'linux')
         run: |
           latest=$(curl -s https://api.github.com/repos/upx/upx/releases/latest)
-          url=$(echo "$latest" | grep -oE '"browser_download_url": *"[^"]*amd64_linux\.tar\.xz"' | head -n1 | sed 's/.*"\(http[^"]*\)"/\1/')
+          pattern="${{ matrix.upx_asset_pattern }}"
+          url=$(echo "$latest" | grep -oE "\"browser_download_url\": *\"[^\"]*${pattern}\"" | head -n1 | sed 's/.*"\(http[^"]*\)"/\1/')
           tag=$(echo "$latest" | grep -oE '"tag_name": *"[^"]*"' | head -n1 | cut -d'"' -f4)
+          if [ -z "$url" ]; then
+            echo "Warning: no UPX asset matching $pattern — skipping UPX"
+            exit 0
+          fi
           echo "Downloading UPX $tag from $url"
           curl -L "$url" -o upx.tar.xz
           mkdir -p upx-tmp && tar -xf upx.tar.xz -C upx-tmp --strip-components=1
@@ -197,9 +188,9 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  # ─────────────────────────────────────────────────────────────
+  #─────────────────────────────────────────────────────────────
   # Release: gather all artifacts and publish a single GitHub release
-  # ─────────────────────────────────────────────────────────────
+  #─────────────────────────────────────────────────────────────
   release:
     name: Publish GitHub Release
     needs: build
@@ -240,21 +231,32 @@ jobs:
 
             ### 📦 Downloads
 
-            | Platform | File |
-            |---|---|
-            | 🪟 **Windows x64**  | `Nomina-v${{ inputs.version }}-windows-x64.zip`  |
-            | 🐧 **Linux x64**    | `Nomina-v${{ inputs.version }}-linux-x64.tar.gz` |
-            | 🍎 **macOS**        | `Nomina-v${{ inputs.version }}-macos.zip`        |
+            | Platform | Architecture | File |
+            |---|---|---|
+            | 🪟 **Windows**        | x64           | `Nomina-v${{ inputs.version }}-windows-x64.zip`  |
+            | 🐧 **Linux**          | x64 (amd64)   | `Nomina-v${{ inputs.version }}-linux-x64.tar.gz` |
+            | 🐧 **Linux**          | ARM64 (aarch64, Raspberry Pi) | `Nomina-v${{ inputs.version }}-linux-arm64.tar.gz` |
+            | 🍎 **macOS (Intel)**  | x64 (2019 and older) | `Nomina-v${{ inputs.version }}-macos-x64.zip` |
+            | 🍎 **macOS (Apple Silicon)** | ARM64 (M1/M2/M3/M4) | `Nomina-v${{ inputs.version }}-macos-arm64.zip` |
 
             SHA-256 checksums are in `SHA256SUMS.txt`.
 
             ### 🚀 Run
 
             - **Windows** — unzip and run `Nomina.exe`
-            - **Linux** — `tar -xzf` and run `./Nomina/Nomina`
-            - **macOS** — unzip and drag `Nomina.app` to Applications
+            - **Linux (x64)** — `tar -xzf` and run `./Nomina/Nomina`
+            - **Linux (ARM64)** — same as above, on Raspberry Pi 4/5 or ARM servers
+            - **macOS Intel** — unzip and drag `Nomina.app` to Applications
+            - **macOS Apple Silicon** — unzip and drag `Nomina.app` to Applications
 
             > On macOS first launch, right-click → *Open* (unsigned build).
+
+            ### 📋 System requirements
+
+            - **Windows**: Windows 10/11 x64, WebView2 (preinstalled on Win 11)
+            - **Linux x64**: Any modern distro with `libwebkit2gtk-4.1` and `libgtk-3`
+            - **Linux ARM64**: Raspberry Pi OS (64-bit), Ubuntu 22.04+ ARM64
+            - **macOS**: macOS 11 (Big Sur) or newer
           files: |
             release-files/*.zip
             release-files/*.tar.gz
