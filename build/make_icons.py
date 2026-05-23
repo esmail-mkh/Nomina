@@ -31,19 +31,18 @@ def make_ico() -> None:
     if img.mode != "RGBA":
         img = img.convert("RGBA")
 
-    # استفاده از قابلیت داخلی و پایدار Pillow برای ساخت ICO چندسایزی.
-    # این روش از باگ‌های احتمالی append_images در نسخه‌های مختلف جلوگیری می‌کند.
     img.save(
         ICO,
         format="ICO",
         sizes=[(s, s) for s in ICO_SIZES],
     )
-    print(f"  ✓ {ICO.name}")
+    # Use ASCII [OK] instead of Unicode checkmark to avoid cp1252 encoding errors on Windows CI
+    print(f"  [OK] {ICO.name}")
 
 def make_icns() -> None:
-    # فایل icns فقط در مک استفاده می‌شود. در CI ویندوز و لینوکس این بخش Skip می‌شود.
     if sys.platform != "darwin":
-        print("  ⚠ skipping icon.icns (only needed on macOS)")
+        # Use ASCII [SKIP] instead of Unicode warning sign
+        print("  [SKIP] icon.icns (only needed on macOS)")
         return
 
     if not PNG_SRC.exists():
@@ -73,7 +72,7 @@ def make_icns() -> None:
 
     subprocess.run(["iconutil", "-c", "icns", str(iconset), "-o", str(ICNS)], check=True)
     shutil.rmtree(iconset)
-    print(f"  ✓ {ICNS.name}")
+    print(f"  [OK] {ICNS.name}")
 
 def main() -> int:
     print(f"Generating icons from {PNG_SRC.name}")
