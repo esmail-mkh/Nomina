@@ -16,14 +16,14 @@ on:
         required: false
         type: boolean
         default: false
+
 permissions:
   contents: write
 
+env:
+  ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION: true
+
 jobs:
-  #─────────────────────────────────────────────────────────────
-  # Build matrix: Windows x64, Linux x64, Linux ARM64,
-  #               macOS Intel, macOS Apple Silicon
-  #─────────────────────────────────────────────────────────────
   build:
     name: Build (${{ matrix.label }})
     runs-on: ${{ matrix.os }}
@@ -31,7 +31,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          # ── Windows x64 ──────────────────────────────────
           - os: windows-latest
             label: windows-x64
             ext: zip
@@ -39,7 +38,6 @@ jobs:
             archive_name: Nomina-v${{ inputs.version }}-windows-x64
             upx_asset_pattern: 'win64\.zip$'
 
-          # ── Linux x64 ────────────────────────────────────
           - os: ubuntu-latest
             label: linux-x64
             ext: tar.gz
@@ -47,7 +45,6 @@ jobs:
             archive_name: Nomina-v${{ inputs.version }}-linux-x64
             upx_asset_pattern: 'amd64_linux\.tar\.xz$'
 
-          # ── Linux ARM64 (Raspberry Pi 4/5, ARM servers) ──
           - os: ubuntu-24.04-arm
             label: linux-arm64
             ext: tar.gz
@@ -55,14 +52,6 @@ jobs:
             archive_name: Nomina-v${{ inputs.version }}-linux-arm64
             upx_asset_pattern: 'arm64_linux\.tar\.xz$'
 
-          # ── macOS Intel (2019 and older) ─────────────────
-          - os: macos-13
-            label: macos-x64
-            ext: zip
-            artifact_glob: 'dist/Nomina.app'
-            archive_name: Nomina-v${{ inputs.version }}-macos-x64
-
-          # ── macOS Apple Silicon (M1/M2/M3/M4) ────────────
           - os: macos-latest
             label: macos-arm64
             ext: zip
@@ -79,9 +68,6 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
 
-      # ─────────────────────────────────────────────────────────
-      # Linux system deps — runs on BOTH linux-x64 and linux-arm64
-      # ─────────────────────────────────────────────────────────
       - name: Install Linux system deps
         if: startsWith(matrix.label, 'linux')
         run: |
@@ -105,14 +91,8 @@ jobs:
         run: python -m pip install "PyGObject<3.52"
 
       - name: Generate platform icons
-        # Converts build/icon.png into icon.ico (Windows) and icon.icns (macOS).
-        # Linux uses icon.png directly. On non-macOS runners, icon.icns is skipped.
         run: python build/make_icons.py
 
-      # ─────────────────────────────────────────────────────────
-      # UPX — latest release, fetched per-platform.
-      # Skipped on macOS (breaks Mach-O + trips Gatekeeper).
-      # ─────────────────────────────────────────────────────────
       - name: Install latest UPX (Windows)
         if: startsWith(matrix.label, 'windows')
         shell: pwsh
@@ -161,24 +141,60 @@ jobs:
             pyinstaller build/nomina.spec --noconfirm --clean
           fi
 
-      - name: Package (Windows / macOS — zip)
-        if: matrix.ext == 'zip'
+      - name: Package (Windows — zip via PowerShell)
+        if: startsWith(matrix.label, 'windows')
+        shell: pwsh
+        run: |
+          $archiveName = "${{ matrix.archive_name }}"
+          Compress-Archive -Path "dist\Nomina" -DestinationPath "$archiveName.zip" -Force
+          Write-Host "Created: $archiveName.zip"
+
+      - name: Package (macOS — zip via ditto)
+        if: matrix.label == 'macos-arm64'
         shell: bash
         run: |
           cd dist
-          if [ -d "Nomina.app" ]; then
-            # macOS: zip the .app bundle preserving symlinks/perms
-            ditto -c -k --sequesterRsrc --keepParent "Nomina.app" "../${{ matrix.archive_name }}.zip"
-          else
-            # Windows: zip the Nomina folder
-            7z a -tzip "../${{ matrix.archive_name }}.zip" "Nomina" >/dev/null
-          fi
+          ditto -c -k --sequesterRsrc --keepParent "Nomina.app" "../${{ matrix.archive_name }}.zip"
 
       - name: Package (Linux — tar.gz)
         if: matrix.ext == 'tar.gz'
         run: |
           cd dist
           tar -czf "../${{ matrix.archive_name }}.tar.gz" Nomina
+
+      - name: Install Inno Setup (Windows only)
+        if: startsWith(matrix.label, 'windows')
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress -y
+          echo "C:\Program Files (x86)\Inno Setup 6" | Out-File -FilePath $env:GITHUB_PATH -Encoding utf8 -Append
+
+      - name: Build Windows Installer
+        if: startsWith(matrix.label, 'windows')
+        shell: pwsh
+        run: |
+          $version = "${{ inputs.version }}"
+          $isccPath = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $isccPath)) {
+            $isccPath = Get-Command iscc.exe -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source
+            if (-not $isccPath) { throw "ISCC.exe not found" }
+          }
+          Write-Host "Running Inno Setup with AppVersion=$version"
+          & $isccPath build\installer.iss /DAppVersion=$version /Q
+          $installerName = "Nomina-Setup-$version.exe"
+          if (-not (Test-Path "dist\$installerName")) {
+            throw "Installer was not created at dist\$installerName"
+          }
+          Write-Host "Installer created: dist\$installerName"
+
+      - name: Upload installer artifact (Windows only)
+        if: startsWith(matrix.label, 'windows')
+        uses: actions/upload-artifact@v4
+        with:
+          name: Nomina-Setup-v${{ inputs.version }}
+          path: dist/Nomina-Setup-v${{ inputs.version }}.exe
+          if-no-files-found: error
+          retention-days: 7
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -188,9 +204,6 @@ jobs:
           if-no-files-found: error
           retention-days: 7
 
-  #─────────────────────────────────────────────────────────────
-  # Release: gather all artifacts and publish a single GitHub release
-  #─────────────────────────────────────────────────────────────
   release:
     name: Publish GitHub Release
     needs: build
@@ -207,7 +220,7 @@ jobs:
       - name: Flatten artifacts
         run: |
           mkdir -p release-files
-          find artifacts -type f \( -name "*.zip" -o -name "*.tar.gz" \) -exec cp {} release-files/ \;
+          find artifacts -type f \( -name "*.zip" -o -name "*.tar.gz" -o -name "*.exe" \) -exec cp {} release-files/ \;
           ls -lh release-files
 
       - name: Generate checksums
@@ -233,21 +246,24 @@ jobs:
 
             | Platform | Architecture | File |
             |---|---|---|
-            | 🪟 **Windows**        | x64           | `Nomina-v${{ inputs.version }}-windows-x64.zip`  |
-            | 🐧 **Linux**          | x64 (amd64)   | `Nomina-v${{ inputs.version }}-linux-x64.tar.gz` |
-            | 🐧 **Linux**          | ARM64 (aarch64, Raspberry Pi) | `Nomina-v${{ inputs.version }}-linux-arm64.tar.gz` |
-            | 🍎 **macOS (Intel)**  | x64 (2019 and older) | `Nomina-v${{ inputs.version }}-macos-x64.zip` |
+            | 🪟 **Windows Installer** ⭐ | x64 | `Nomina-Setup-v${{ inputs.version }}.exe` |
+            | 🪟 **Windows Portable**   | x64 | `Nomina-v${{ inputs.version }}-windows-x64.zip` |
+            | 🐧 **Linux**              | x64 (amd64) | `Nomina-v${{ inputs.version }}-linux-x64.tar.gz` |
+            | 🐧 **Linux**              | ARM64 (Raspberry Pi) | `Nomina-v${{ inputs.version }}-linux-arm64.tar.gz` |
             | 🍎 **macOS (Apple Silicon)** | ARM64 (M1/M2/M3/M4) | `Nomina-v${{ inputs.version }}-macos-arm64.zip` |
+
+            > 💡 **Windows users:** Use the **Installer** (`.exe`) for a standard installation with Start Menu & Desktop shortcuts and automatic uninstaller. Use the **Portable** (`.zip`) if you prefer a no-install, run-from-anywhere version.
+            > 💡 **macOS Intel users:** The Apple Silicon version runs on Intel Macs via Rosetta 2.
 
             SHA-256 checksums are in `SHA256SUMS.txt`.
 
             ### 🚀 Run
 
-            - **Windows** — unzip and run `Nomina.exe`
+            - **Windows (Installer)** — run `Nomina-Setup-v${{ inputs.version }}.exe`, follow the wizard, launch from Start Menu
+            - **Windows (Portable)** — unzip and run `Nomina.exe`
             - **Linux (x64)** — `tar -xzf` and run `./Nomina/Nomina`
             - **Linux (ARM64)** — same as above, on Raspberry Pi 4/5 or ARM servers
-            - **macOS Intel** — unzip and drag `Nomina.app` to Applications
-            - **macOS Apple Silicon** — unzip and drag `Nomina.app` to Applications
+            - **macOS** — unzip and drag `Nomina.app` to Applications
 
             > On macOS first launch, right-click → *Open* (unsigned build).
 
@@ -256,8 +272,9 @@ jobs:
             - **Windows**: Windows 10/11 x64, WebView2 (preinstalled on Win 11)
             - **Linux x64**: Any modern distro with `libwebkit2gtk-4.1` and `libgtk-3`
             - **Linux ARM64**: Raspberry Pi OS (64-bit), Ubuntu 22.04+ ARM64
-            - **macOS**: macOS 11 (Big Sur) or newer
+            - **macOS**: macOS 11 (Big Sur) or newer (Apple Silicon native, Intel via Rosetta 2)
           files: |
             release-files/*.zip
             release-files/*.tar.gz
+            release-files/*.exe
             release-files/SHA256SUMS.txt
