@@ -173,14 +173,15 @@ jobs:
         if: startsWith(matrix.label, 'windows')
         shell: pwsh
         run: |
-          $version = "${{ inputs.version }}"
+          $version = "${{ inputs.version }}" -replace '^v', ''
           $isccPath = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
           if (-not (Test-Path $isccPath)) {
             $isccPath = Get-Command iscc.exe -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Source
             if (-not $isccPath) { throw "ISCC.exe not found" }
           }
           Write-Host "Running Inno Setup with AppVersion=$version"
-          & $isccPath build\installer.iss /DAppVersion=$version /Q
+          & $isccPath build\installer.iss /DAppVersion=$version
+          if ($LASTEXITCODE -ne 0) { throw "ISCC.exe failed with exit code $LASTEXITCODE" }
           $installerName = "Nomina-Setup-v$version.exe"
           if (-not (Test-Path "dist\$installerName")) {
             throw "Installer was not created at dist\$installerName"
@@ -246,8 +247,8 @@ jobs:
 
             | Platform | Architecture | File |
             |---|---|---|
-            | 🪟 **Windows Installer** ⭐ | x64 | `Nomina-Setup-v${{ inputs.version }}.exe` |
-            | 🪟 **Windows Portable**   | x64 | `Nomina-v${{ inputs.version }}-windows-x64.zip` |
+            | 🖥️ **Windows Installer** ⭐ | x64 | `Nomina-Setup-v${{ inputs.version }}.exe` |
+            | 🖥️ **Windows Portable**   | x64 | `Nomina-v${{ inputs.version }}-windows-x64.zip` |
             | 🐧 **Linux**              | x64 (amd64) | `Nomina-v${{ inputs.version }}-linux-x64.tar.gz` |
             | 🐧 **Linux**              | ARM64 (Raspberry Pi) | `Nomina-v${{ inputs.version }}-linux-arm64.tar.gz` |
             | 🍎 **macOS (Apple Silicon)** | ARM64 (M1/M2/M3/M4) | `Nomina-v${{ inputs.version }}-macos-arm64.zip` |
