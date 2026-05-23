@@ -1,6 +1,6 @@
 ; ─────────────────────────────────────────────────────────────
 ; Inno Setup Script for Nomina
-; Builds: Nomina-Setup-{version}.exe
+; Builds: Nomina-Setup-v{version}.exe
 ; 
 ; Build locally (Windows only):
 ;   iscc build\installer.iss /DAppVersion=1.0.0
@@ -26,7 +26,7 @@ AllowNoIcons=yes
 DisableProgramGroupPage=yes
 PrivilegesRequired=lowest
 OutputDir=..\dist
-OutputBaseFilename=Nomina-Setup-{#AppVersion}
+OutputBaseFilename=Nomina-Setup-v{#AppVersion}
 SetupIconFile=icon.ico
 Compression=lzma2/max
 SolidCompression=yes
