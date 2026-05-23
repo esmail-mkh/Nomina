@@ -141,7 +141,7 @@ You can produce a standalone, redistributable app for your platform with PyInsta
 
 ```bash
 # Install build tooling
-pip install pyinstaller cairosvg pillow
+pip install pyinstaller pillow
 
 # Generate platform-specific icons from build/icon.svg
 python build/make_icons.py
